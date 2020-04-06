@@ -3,7 +3,7 @@ Telegram cache4.db parser.
 
 *This script is introduced by the blog post at https://blog.digital-forensics.it/2020/04/teleparser.html*
 
-`teleparser` is a Python3 script aimed to parse the **Telegram cache4.db database**. It's not for the _faint hearted_ and the expected user is a DIFR expert. As written in the blog post, the goal is to do not miss data or to misinterpret it: the script should crash if what's parsing is not what's expected... if not, that's **A** bug.
+`teleparser` is a Python3 script aimed to parse the **Telegram cache4.db database**. It's not for the _faint hearted_ and the expected user is a DFIR expert. As written in the blog post, the goal is to not miss data or to misinterpret it: the script should crash if what is parsing is not what is expected... if not, that's **A** bug.
 
 It's assumed a bit of knowledge on how the cache4.db is organized and the specificy of its *blobs*.
 
