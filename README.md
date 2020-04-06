@@ -5,7 +5,7 @@ Telegram cache4.db parser.
 
 `teleparser` is a Python3 script aimed to parse the **Telegram cache4.db database**. It's not for the _faint hearted_ and the expected user is a DFIR expert. As written in the blog post, the goal is not to miss the data and not to misinterpret it: the script should crash if what is parsing is not what is expected... if not, that's **A** bug.
 
-It's assumed a bit of knowledge on how the cache4.db is organized and the specificy of its *blobs*.
+It's assumed a bit of knowledge on how the cache4.db is organized and the specificity of its *blobs*.
 
 ### Current Telegram versions supported
 
