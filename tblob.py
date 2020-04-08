@@ -3558,7 +3558,7 @@ class tblob(): # pylint: disable=C0103
     def reply_markup_structures(self, name):
         # pylint: disable=C0301
         tag_map = {
-            0x85e42301: LazyBound(lambda: self.reply_keyboard_hide_struct()),
+            0xa03e5b85: LazyBound(lambda: self.reply_keyboard_hide_struct()),
             0xf4108aa0: LazyBound(lambda: self.reply_keyboard_force_reply_struct()),
             0x3502758c: LazyBound(lambda: self.reply_keyboard_markup_struct()),
             0x48a30254: LazyBound(lambda: self.reply_inline_markup_struct())

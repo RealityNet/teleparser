@@ -5,6 +5,8 @@
 # Part of the project: tblob.py tdb.py logger.py
 #
 # Version History
+# - 20200407: [tblob] fixed a bug, [tdb] added a couple of checks base on
+#             version 4.8.11, added small script to test/debug single blobs
 # - 20200406: first public release (5.5.0, 5.6.2)
 # - 20190729: first private release
 #
@@ -43,7 +45,7 @@ import logger
 import tblob
 import tdb
 
-VERSION = '20200406'
+VERSION = '20200407'
 
 #------------------------------------------------------------------------------
 

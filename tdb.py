@@ -167,7 +167,13 @@ class tdb():
             assert uid
             assert uid not in self._table_enc_chats
             logger.info('parsing enc_chats, entry uid: %s', uid)
-            blob = self._blob_parser.parse_blob(entry['data'])
+            # [20200408] Check if we have a blob of bytes.
+            if isinstance(entry['data'], bytes):
+                blob = self._blob_parser.parse_blob(entry['data'])
+            else:
+                blob = None
+                logger.error('enc_chats uid:%s blob is not made by bytes, '
+                             'skipping it', uid)
 
             admin_id = getattr(blob, 'admin_id', None)
             if admin_id:
@@ -354,8 +360,12 @@ class tdb():
                 fo.write('{}\n\n'.format(user.blob))
 
     def __parse_table_user_settings(self):
-        self._sqlite_db_cursor.execute('SELECT * from user_settings')
-        entries = self._sqlite_db_cursor.fetchall()
+        try:
+            self._sqlite_db_cursor.execute('SELECT * from user_settings')
+            entries = self._sqlite_db_cursor.fetchall()
+        except Exception as ee:
+            logger.error('Exception accessing user_settings table. %s', str(ee))
+            return
 
         for entry in entries:
             uid = int(entry['uid'])
@@ -493,8 +503,9 @@ class tdb():
             row.to_who = participant_id_short
             row.to_id = echat.participant_id
 
+            echat_sname = getattr(echat.blob, 'sname', '')
             row.content = '{} {}'.format(
-                echat.blob.sname, trow.dict_to_string(echat.dict_id))
+                echat_sname, trow.dict_to_string(echat.dict_id))
 
             if echat.creation_date:
                 row.timestamp = to_date(echat.creation_date)
