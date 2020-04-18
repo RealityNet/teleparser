@@ -5,6 +5,7 @@
 # Part of the project: tblob.py tdb.py logger.py
 #
 # Version History
+# - 20200418: change eol terminators, added requirements file
 # - 20200407: [tblob] fixed a bug, [tdb] added a couple of checks base on
 #             version 4.8.11, added small script to test/debug single blobs
 # - 20200406: first public release (5.5.0, 5.6.2)
@@ -45,7 +46,7 @@ import logger
 import tblob
 import tdb
 
-VERSION = '20200407'
+VERSION = '20200418'
 
 #------------------------------------------------------------------------------
 
