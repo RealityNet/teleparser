@@ -380,9 +380,9 @@ class tblob(): # pylint: disable=C0103
             'access_hash' / Int64ul,
             'title' / self.tstring_struct)
 
-    def channel_struct(self):
+    def channel_layer104_struct(self):
         return Struct(
-            'sname' / Computed('channel'),
+            'sname' / Computed('channel_layer104'),
             'signature' / Hex(Const(0x4df30834, Int32ul)),
             'flags' / FlagsEnum(Int32ul,
                                 creator=1,
@@ -670,6 +670,8 @@ class tblob(): # pylint: disable=C0103
             'migrated_to' / If(this.flags.is_migrated,
                                self.input_channel_structures('migrated_to')))
 
+    # SUPERTODO channel 0xd31a961e
+
     def chat_structures(self, name):
         tag_map = {
             0x8537784f: LazyBound(lambda: self.channel_forbidden_layer67_struct()),
@@ -685,7 +687,7 @@ class tblob(): # pylint: disable=C0103
             0x3bda1bde: LazyBound(lambda: self.chat_struct()),
             0x450b7115: LazyBound(lambda: self.channel_layer77_struct()),
             0x4b1b7506: LazyBound(lambda: self.channel_layer48_struct()),
-            0x4df30834: LazyBound(lambda: self.channel_struct()),
+            0x4df30834: LazyBound(lambda: self.channel_layer104_struct()),
             0x678e9587: LazyBound(lambda: self.channel_old_struct()),
             0x6e9c9bc7: LazyBound(lambda: self.chat_old_struct()),
             0x7312bc48: LazyBound(lambda: self.chat_old2_struct())
@@ -758,9 +760,9 @@ class tblob(): # pylint: disable=C0103
             '_signature' / Peek(Int32ul),
             name / Switch(this._signature, tag_map))
 
-    def contacts_link_struct(self):
+    def contacts_link_layer101_struct(self):
         return Struct(
-            'sname' / Computed('contacts_link'),
+            'sname' / Computed('contacts_link_layer101'),
             'signature' / Hex(Const(0x3ace484c, Int32ul)),
             'my_link' / self.contact_link_structures('my_link'),
             'foreign_link' / self.contact_link_structures('foreign_link'),
@@ -2060,7 +2062,7 @@ class tblob(): # pylint: disable=C0103
             'sname' / Computed('message_media_poll'),
             'signature' / Hex(Const(0x4bd6e798, Int32ul)),
             'poll' / self.poll_struct(),
-            'results' / self.poll_results_struct())
+            'results' / self.poll_results_struct_TODO()) # ADD poll structures!
 
     def message_media_geo_struct(self):
         return Struct(
@@ -2461,9 +2463,9 @@ class tblob(): # pylint: disable=C0103
             'views' / If(this.flags.has_views, Int32ul),
             'edit_timestamp' / If(this.flags.is_edited, Int32ul))
 
-    def message_struct(self):
+    def message_layer104_struct(self):
         return Struct(
-            'sname' / Computed('message'),
+            'sname' / Computed('message_layer104'),
             'signature' / Hex(Const(0x44f9b43d, Int32ul)),
             'flags' / FlagsEnum(Int32ul,
                                 out=2,
@@ -2510,10 +2512,73 @@ class tblob(): # pylint: disable=C0103
             'grouped_id' / If(this.flags.is_grouped_id, Int64ul),
             'UNPARSED' / GreedyBytes)
 
+    def message_struct(self):
+        return Struct(
+            'sname' / Computed('message_struct'),
+            'signature' / Hex(Const(0x452c0e65, Int32ul)),
+            'flags' / FlagsEnum(Int32ul,
+                                out=2,
+                                forwarded=4,
+                                is_reply_to_msg_id=8,
+                                mentioned=16,
+                                media_unread=32,
+                                has_reply_markup=64,
+                                has_entities=128,
+                                has_from_id=256,
+                                has_media=512,
+                                has_views=1024,
+                                is_via_bot=2048,
+                                silent=8192,
+                                post=16384,
+                                is_edited=32768,
+                                has_author=65536,
+                                is_grouped_id=131072,
+                                is_from_scheduled=262144,
+                                is_restricted=4194304,
+                                is_legacy=524288,
+                                is_edit_hide=2097152),
+            'id' / Int32ul,
+            'from_id' / If(this.flags.has_from_id, Int32ul),
+            'to_id' / self.peer_structures('to_id'),
+            'fwd_from' / If(this.flags.forwarded,
+                            self.message_fwd_header_structures('fwd_from')),
+            'via_bot_id' / If(this.flags.is_via_bot, Int32ul),
+            'reply_to_msg_id' / If(this.flags.is_reply_to_msg_id, Int32ul),
+            'date' / self.ttimestamp_struct,
+            'message' / self.tstring_struct,
+            'media' / If(this.flags.has_media,
+                         self.message_media_structures('media')),
+            # The following two fields are copied from media, ignored.
+            '_media_ttl' / Computed('ignored'),
+            '_media_caption_legacy' / Computed('ignored'),
+            'reply_markup' / If(this.flags.has_reply_markup,
+                                self.reply_markup_structures('reply_markup')),
+            'entities' / If(this.flags.has_entities, Struct(
+                '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
+                'message_entity_num' / Int32ul,
+                'message_entity_array' / Array(
+                    this.message_entity_num,
+                    self.message_entity_structures('message_entity')))),
+            'views' / If(this.flags.has_views, Int32ul),
+            'edit_timestamp' / If(this.flags.is_edited, self.ttimestamp_struct),
+            'post_author' / If(this.flags.has_author, self.tstring_struct),
+            'grouped_id' / If(this.flags.is_grouped_id, Int64ul),
+            'restriction_reasons' / If(this.flags.is_restricted, Struct(
+                '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
+                'restriction_reasons_num' / Int32ul,
+                'restriction_reasons_array' / Array(
+                    this.restriction_reasons_num,
+                    self.message_entity_structures('restriction_reason')))),
+            #TODO TODO TODO is_restricted array di TL_restrictionReason
+            'UNPARSED' / GreedyBytes)
+
+            # TODO LAYERS, check!
+
     def message_structures(self, name):
         # pylint: disable=C0301
         tag_map = {
-            0x44f9b43d: LazyBound(lambda: self.message_struct()),
+            0x452c0e65: LazyBound(lambda: self.message_struct()),
+            0x44f9b43d: LazyBound(lambda: self.message_layer104_struct()),
             0x83e5de54: LazyBound(lambda: self.message_empty_struct()),
             0x90dddc11: LazyBound(lambda: self.message_layer72_struct()),
             0x9e19a1f6: LazyBound(lambda: self.message_service_struct()),
@@ -3486,9 +3551,9 @@ class tblob(): # pylint: disable=C0103
                       'option' / self.tbytes_struct,
                       'voters' / Int32ul)
 
-    def poll_results_struct(self):
+    def poll_results_layer108_struct(self):
         return Struct(
-            'sname' / Computed('poll_results'),
+            'sname' / Computed('poll_results_layer108'),
             'signature' / Hex(Const(0x5755785a, Int32ul)),
             'flags' / FlagsEnum(Int32ul,
                                 has_min=1,
@@ -3503,6 +3568,9 @@ class tblob(): # pylint: disable=C0103
                         this.poll_answer_voters_num,
                         self.poll_answer_voters_struct()))),
             'total_voters' / If(this.flags.has_total, Int32ul))
+
+
+    #SUPERTODO ADD pollresults structures.
 
     def poll_struct(self):
         return Struct('sname' / Computed('poll'),
@@ -3910,7 +3978,7 @@ class tblob(): # pylint: disable=C0103
                                 can_pin_message=128),
             'user' / self.user_structures('user'),
             'about' / If(this.flags.has_about, self.tstring_struct),
-            'link' / self.contacts_link_struct(),
+            'link' / self.contacts_link_layer101_struct(),
             'profile_photo' / If(this.flags.has_profile_photo,
                                  self.photo_structures('profile_photo')),
             'notify_settings' / self.peer_notify_settings_structures(
@@ -3920,9 +3988,9 @@ class tblob(): # pylint: disable=C0103
             'pinned_msg_id' / If(this.flags.has_pinned_msg_id, Int32ul),
             'common_chats_count' / Int32ul)
 
-    def user_full_struct(self):
+    def user_full_layer101_struct(self):
         return Struct(
-            'sname' / Computed('user_full'),
+            'sname' / Computed('user_full_layer101'),
             'signature' / Hex(Const(0x745559cc, Int32ul)),
             'flags' / FlagsEnum(Int32ul,
                                 is_blocked=1,
@@ -3936,7 +4004,7 @@ class tblob(): # pylint: disable=C0103
                                 has_folder_id=2048),
             'user' / self.user_structures('user'),
             'about' / If(this.flags.has_about, self.tstring_struct),
-            'link' / self.contacts_link_struct(),
+            'link' / self.contacts_link_layer101_struct(),
             'profile_photo' / If(this.flags.has_profile_photo,
                                  self.photo_structures('profile_photo')),
             'notify_settings' / self.peer_notify_settings_structures(
@@ -3947,11 +4015,13 @@ class tblob(): # pylint: disable=C0103
             'common_chats_count' / Int32ul,
             'folder_id' / If(this.flags.has_folder_id, Int32ul))
 
+    #TODO ADD structures for user_full, add 0xedf17c12
+
     #--------------------------------------------------------------------------
 
-    def user_struct(self):
+    def user_layer104_struct(self):
         return Struct(
-            'sname' / Computed('user'),
+            'sname' / Computed('user_layer104'),
             'signature' / Hex(Const(0x2e13f4c3, Int32ul)),
             'flags' / FlagsEnum(Int32ul,
                                 has_access_hash=1,
@@ -4198,10 +4268,12 @@ class tblob(): # pylint: disable=C0103
             'status' / self.user_status_structures('status'),
             'inactive' / self.tbool_struct)
 
+    #SUPERTODO 0x938458c1
+
     def user_structures(self, name):
         # pylint: disable=C0301
         tag_map = {
-            0x2e13f4c3: LazyBound(lambda: self.user_struct()),
+            0x2e13f4c3: LazyBound(lambda: self.user_layer104_struct()),
             0xb29ad7cc: LazyBound(lambda: self.user_deleted_old_struct()),
             0xcab35e18: LazyBound(lambda: self.user_contact_old2_struct()),
             0xd10d979a: LazyBound(lambda: self.user_layer65_struct()),
@@ -4555,9 +4627,9 @@ class tblob(): # pylint: disable=C0103
             'signature' / Hex(Const(0xeb1477e8, Int32ul)),
             'id' / Int64ul)
 
-    def web_page_struct(self):
+    def web_page_layer104_struct(self):
         return Struct(
-            'sname' / Computed('web_page'),
+            'sname' / Computed('web_page_layer104'),
             'signature' / Hex(Const(0x5f07b4bc, Int32ul)),
             'flags' / FlagsEnum(Int32ul,
                                 has_type=1,
@@ -4591,10 +4663,12 @@ class tblob(): # pylint: disable=C0103
             'cached_page' / If(this.flags.is_cached,
                                self.page_structures('cached_page')))
 
+    #SUPERTODO 0xe89c45b2 + layer107
+
     def web_page_structures(self, name):
         # pylint: disable=C0301
         tag_map = {
-            0x5f07b4bc: LazyBound(lambda: self.web_page_struct()),
+            0x5f07b4bc: LazyBound(lambda: self.web_page_layer104_struct()),
             0xd41a5167: LazyBound(lambda: self.web_page_url_pending_struct()),
             0xca820ed7: LazyBound(lambda: self.web_page_layer58_struct()),
             0xc586da1c: LazyBound(lambda: self.web_page_pending_struct()),
@@ -4623,6 +4697,7 @@ class tblob(): # pylint: disable=C0103
         0x2714d86c: (None, 'account_check_username', None),  # 655677548
         0x8fdf1920: (None, 'account_confirm_password_email', None),  # -1881204448
         0x5f2178c3: (None, 'account_confirm_phone', None),  # 1596029123
+        0x8432c21f: (None, 'account_create_theme', None), # -2077048289
         0x418d4e0b: (None, 'account_delete_account', None),  # 1099779595
         0xb880bc4b: (None, 'account_delete_secure_value', None),  # -1199522741
         0x08fc711d: (None, 'account_get_account_ttl', None),  # 150761757
@@ -4631,24 +4706,30 @@ class tblob(): # pylint: disable=C0103
         0xe320c158: (None, 'account_get_authorizations', None),  # -484392616
         0x56da0b3f: (None, 'account_get_auto_download_settings', None),  # 1457130303
         0x9f07c728: (None, 'account_get_contact_sign_up_notification', None),  # -1626880216
+        0x65ad71dc: (None, 'account_get_multi_wall_papers', None), # 1705865692
         0x53577479: (None, 'account_get_notify_exceptions', None),  # 1398240377
         0x12b3ad31: (None, 'account_get_notify_settings', None),  # 313765169
         0x548a30f5: (None, 'account_get_password', None),  # 1418342645
         0x9cd4eaf9: (None, 'account_get_password_settings', None),  # -1663767815
         0xdadbc950: (None, 'account_get_privacy', None),  # -623130288
         0x73665bc2: (None, 'account_get_secure_value', None),  # 1936088002
+        0x8d9d742b: (None, 'account_get_theme', None), # -1919060949
+        0x285946f8: (None, 'account_get_themes', None), # 676939512
         0x449e0b51: (None, 'account_get_tmp_password', None),  # 1151208273
         0xfc8ddbea: (None, 'account_get_wall_paper', None),  # -57811990
         0xaabb1763: (None, 'account_get_wall_papers', None),  # -1430579357
         0xc04cfac2: (None, 'account_get_wall_papers_v_0_1_317'),  # -1068696894
         0x182e6d6f: (None, 'account_get_web_authorizations', None),  # 405695855
+        0x7ae43737: (None, 'account_install_theme', None), # 2061776695
         0xfeed5769: (None, 'account_install_wall_paper', None),  # -18000023
         0xad2641f8: (None, 'account_password', None),  # -1390001672
         0xc23727c9: (None, 'account_password_input_settings', None),  # -1036572727
         0x9a5c33e5: (None, 'account_password_settings', None),  # -1705233435
-        0x554abb6f: (None, 'account_privacy_rules', None),  # 1430961007
-        0x5cbea590: (None, 'account_register_device', None),  # 1555998096
-        0x446c712c: (None, 'account_register_device_v_0_1_317'),  # 1147957548
+        0x50a04e45: (None, 'account_privacy_rules', None), # 1352683077
+        0x68976c6f: (None, 'account_register_device', None), # 1754754159
+        0x554abb6f: (None, 'account_privacy_rules_v_5_6_2', None), # 1430961007
+        0x446c712c: (None, 'account_register_device_v_0_1_317', None), # 1147957548
+        0x5cbea590: (None, 'account_register_device_v_5_6_2', None), # 1555998096
         0xae189d5f: (None, 'account_report_peer', None),  # -1374118561
         0x7a7f2a15: (None, 'account_resend_password_email', None),  # 2055154197
         0xdf77f3bc: (None, 'account_reset_authorization', None),  # -545786948
@@ -4658,6 +4739,7 @@ class tblob(): # pylint: disable=C0103
         0x682d2594: (None, 'account_reset_web_authorizations', None),  # 1747789204
         0x76f36233: (None, 'account_save_auto_download_settings', None),  # 1995661875
         0x899fe31d: (None, 'account_save_secure_value', None),  # -1986010339
+        0xf257106c: (None, 'account_save_theme', None), # -229175188
         0x6c5a5b37: (None, 'account_save_wall_paper', None),  # 1817860919
         0x82574ae5: (None, 'account_send_change_phone_code', None),  # -2108208411
         0x1b3faa88: (None, 'account_send_confirm_phone_code', None),  # 457157256
@@ -4667,6 +4749,8 @@ class tblob(): # pylint: disable=C0103
         0x2442485e: (None, 'account_set_account_ttl', None),  # 608323678
         0xcff43f61: (None, 'account_set_contact_sign_up_notification', None),  # -806076575
         0xc9f81ce8: (None, 'account_set_privacy', None),  # -906486552
+        0x7f676421: (None, 'account_themes', None), # 2137482273
+        0xf41eb622: (None, 'account_themes_not_modified', None), # -199313886
         0xdb64fd34: (None, 'account_tmp_password', None),  # -614138572
         0x3076c4bf: (None, 'account_unregister_device', None),  # 813089983
         0x65c55b40: (None, 'account_unregister_device_v_0_1_317'),  # 1707432768
@@ -4676,7 +4760,9 @@ class tblob(): # pylint: disable=C0103
         0x78515775: (None, 'account_update_profile', None),  # 2018596725
         0xf0888d68: (None, 'account_update_profile_v_0_1_317'),  # -259486360
         0x6628562c: (None, 'account_update_status', None),  # 1713919532
+        0x5cb367d5: (None, 'account_update_theme', None), # 1555261397
         0x3e0bdd7c: (None, 'account_update_username', None),  # 1040964988
+        0x1c3db333: (None, 'account_upload_theme', None), # 473805619
         0xdd853661: (None, 'account_upload_wall_paper', None),  # -578472351
         0xecba39db: (None, 'account_verify_email', None),  # -323339813
         0x4dd3a7f6: (None, 'account_verify_phone', None),  # 1305716726
@@ -4688,20 +4774,27 @@ class tblob(): # pylint: disable=C0103
         0xf9e35055: (audio_layer45_struct, 'audio_layer45', None),  # -102543275
         0x427425e7: (audio_old_struct, 'audio_old', None),  # 1114908135
         0xc7ac6496: (audio_old2_struct, 'audio_old2', None),  # -945003370
+        0xe894ad4d: (None, 'auth_accept_login_token', None), # -392909491
         0xcd050916: (None, 'auth_authorization', None),  # -855308010
+        0x44747e9a: (None, 'auth_authorization_sign_up_required', None), # 1148485274
         0xf6b673a4: (None, 'auth_authorization_v_0_1_317'),  # -155815004
         0x1f040578: (None, 'auth_cancel_code', None),  # 520357240
         0xd18b4d16: (None, 'auth_check_password', None),  # -779399914
-        0x6fe51dfb: (None, 'auth_check_phone', None),  # 1877286395
-        0x811ea28e: (None, 'auth_checked_phone', None),  # -2128698738
+        0x6fe51dfb: (None, 'auth_check_phone_v_5_6_2', None),  # 1877286395
+        0x811ea28e: (None, 'auth_checked_phone_v_5_6_2', None),  # -2128698738
         0xe300cc3b: (None, 'auth_checked_phone_v_0_1_317'),  # -486486981
         0x741cd3e3: (None, 'auth_code_type_call', None),  # 1948046307
         0x226ccefb: (None, 'auth_code_type_flash_call', None),  # 577556219
         0x72a3158c: (None, 'auth_code_type_sms', None),  # 1923290508
         0xe5bfffcd: (None, 'auth_export_authorization', None),  # -440401971
         0xdf969c2d: (None, 'auth_exported_authorization', None),  # -543777747
+        0xb1b41517: (None, 'auth_export_login_token', None), # -1313598185
         0xe3ef9613: (None, 'auth_import_authorization', None),  # -470837741
+        0x95ac5ce4: (None, 'auth_import_login_token', None), # -1783866140
         0x5717da40: (None, 'auth_log_out', None),  # 1461180992
+        0x629f1980: (None, 'auth_login_token', None), # 1654593920
+        0x068e9916: (None, 'auth_login_token_migrate_to', None), # 110008598
+        0x390d5c5e: (None, 'auth_login_token_success', None), # 957176926
         0x137948a5: (None, 'auth_password_recovery', None),  # 326715557
         0x4ea56e92: (None, 'auth_recover_password', None),  # 1319464594
         0xd897bc66: (None, 'auth_request_password_recovery', None),  # -661144474
@@ -4711,18 +4804,27 @@ class tblob(): # pylint: disable=C0103
         0xa677244f: (None, 'auth_send_code', None),  # -1502141361
         0x768d5f4d: (None, 'auth_send_code_v_0_1_317'),  # 1988976461
         0x771c1d97: (None, 'auth_send_invites_v_0_1_317'),  # 1998331287
-        0x38faab5f: (None, 'auth_sent_code', None),  # 955951967
+        0x5e002502: (None, 'auth_sent_code', None), # 1577067778
+        0x38faab5f: (None, 'auth_sent_code_v_5_6_2', None),  # 955951967
         0x2215bcbd: (None, 'auth_sent_code_v_0_1_317'),  # 571849917
         0x3dbb5986: (None, 'auth_sent_code_type_app', None),  # 1035688326
         0x5353e5a7: (None, 'auth_sent_code_type_call', None),  # 1398007207
         0xab03c6d9: (None, 'auth_sent_code_type_flash_call', None),  # -1425815847
         0xc000bba2: (None, 'auth_sent_code_type_sms', None),  # -1073693790
         0xbcd51581: (None, 'auth_sign_in', None),  # -1126886015
-        0x1b067634: (None, 'auth_sign_up', None),  # 453408308
+        0x80eee427: (None, 'auth_sign_up', None), # -2131827673
+        0x1b067634: (None, 'auth_sign_up_v_5_6_2', None),  # 453408308
         0xad01d61d: (None, 'authorization', None),  # -1392388579
-        0xd246fd47: (None, 'auto_download_settings', None),  # -767099577
+        0xe04232f3: (None, 'auto_download_settings', None), # -532532493
+        0xd246fd47: (None, 'auto_download_settings_v_5_6_2', None),  # -767099577
         0xa7eff811: (None, 'bad_msg_notification_v_0_1_317'),  # -1477445615
         0xedab447b: (None, 'bad_server_salt_v_0_1_317'),  # -307542917
+        0xf568028a: (None, 'bank_card_open_url', None), # -177732982
+        0x5b11125a: (None, 'base_theme_arctic', None), # 1527845466
+        0xc3a12462: (None, 'base_theme_classic', None), # -1012849566
+        0xfbd81688: (None, 'base_theme_day', None), # -69724536
+        0xb7b31ea8: (None, 'base_theme_night', None), # -1212997976
+        0x6d5f77ee: (None, 'base_theme_tinted', None), # 1834973166
         0xbc799737: (None, 'bool_false', None),  # -1132882121 [implemented]
         0x997275b5: (None, 'bool_true', None),  # -1720552011 [implemented]
         0xc27ac8c7: (bot_command_struct, 'bot_command', None),  # -1032140601
@@ -4740,9 +4842,11 @@ class tblob(): # pylint: disable=C0103
         0x4366232e: (None, 'bot_inline_message_media_venue_layer77', None),  # 1130767150
         0x8c7f65e2: (None, 'bot_inline_message_text', None),  # -1937807902
         0x11965f3a: (None, 'bot_inline_result', None),  # 295067450
-        0x4df30834: (channel_struct, 'channel', None),  # 1307772980
+        0xd31a961e: (TODO, 'channel', None), # -753232354
         0x3b5a3e40: (None, 'channel_admin_log_event', None),  # 995769920
         0x55188a2e: (None, 'channel_admin_log_event_action_change_about', None),  # 1427671598
+        0xa26f881b: (None, 'channel_admin_log_event_action_change_linked_chat', None), # -1569748965
+        0x0e6b76ae: (None, 'channel_admin_log_event_action_change_location', None), # 241923758
         0x434bd2af: (None, 'channel_admin_log_event_action_change_photo'),  # 1129042607
         0xb82f55c3: (None, 'channel_admin_log_event_action_change_photo_v_5_5_0', None),  # -1204857405
         0xb1c3caa7: (None, 'channel_admin_log_event_action_change_sticker_set', None),  # -1312568665
@@ -4760,6 +4864,7 @@ class tblob(): # pylint: disable=C0103
         0x1b7907ae: (None, 'channel_admin_log_event_action_toggle_invites', None),  # 460916654
         0x5f5c95f1: (None, 'channel_admin_log_event_action_toggle_pre_history_hidden', None),  # 1599903217
         0x26ae0971: (None, 'channel_admin_log_event_action_toggle_signatures', None),  # 648939889
+        0x53909779: (None, 'channel_admin_log_event_action_toggle_slow_mode', None), # 1401984889
         0xe9e82c18: (None, 'channel_admin_log_event_action_update_pinned', None),  # -370660328
         0xea107ae4: (None, 'channel_admin_log_events_filter', None),  # -368018716
         0x5d7ceba5: (channel_admin_rights_layer92_struct, 'channel_admin_rights_layer92', None),  # 1568467877
@@ -4767,7 +4872,7 @@ class tblob(): # pylint: disable=C0103
         0x289da732: (channel_forbidden_struct, 'channel_forbidden', None),  # 681420594
         0x2d85832c: (channel_forbidden_layer52_struct, 'channel_forbidden_layer52', None),  # 763724588
         0x8537784f: (channel_forbidden_layer67_struct, 'channel_forbidden_layer67', None),  # -2059962289
-        0x03648977: (None, 'channel_full', None),  # 56920439
+        0x2d895c74: (None, 'channel_full', None), # 763976820
         0x9e341ddf: (None, 'channel_full_layer48', None),  # -1640751649
         0x97bee562: (None, 'channel_full_layer52', None),  # -1749097118
         0xc3d5512f: (None, 'channel_full_layer67', None),  # -1009430225
@@ -4776,16 +4881,23 @@ class tblob(): # pylint: disable=C0103
         0x76af5481: (None, 'channel_full_layer72', None),  # 1991201921
         0xcbb62890: (None, 'channel_full_layer89', None),  # -877254512
         0x1c87a71a: (None, 'channel_full_layer98', None),  # 478652186
+        0x03648977: (None, 'channel_full_layer99', None),  # 56920439
+        0x9882e516: (None, 'channel_full_layer101', None), # -1736252138
+        0x10916653: (None, 'channel_full_layer103', None), # 277964371
         0xfab31aa3: (None, 'channel_full_old', None),  # -88925533
+        0x209b82db: (None, 'channel_location', None), # 547062491
+        0xbfb5ad8b: (None, 'channel_location_empty', None), # -1078612597
         0x630e61be: (None, 'chat_full_v_0_1_317'),  # 1661886910
         0xcd77d957: (None, 'channel_messages_filter', None),  # -847783593
         0x94d42ee7: (None, 'channel_messages_filter_empty', None),  # -1798033689
         0x15ebac1d: (None, 'channel_participant', None),  # 367766557
-        0x5daa6e23: (None, 'channel_participant_admin', None),  # 1571450403
+        0xccbebbaf: (None, 'channel_participant_admin', None), # -859915345
+        0x5daa6e23: (None, 'channel_participant_admin_layer103', None), # 1571450403
         0xa82fa898: (None, 'channel_participant_admin_layer92', None),  # -1473271656
         0x1c0facaf: (None, 'channel_participant_banned', None),  # 470789295
         0x222c1886: (None, 'channel_participant_banned_layer92', None),  # 573315206
-        0xe3e2e1f9: (None, 'channel_participant_creator', None),  # -471670279
+        0x808d15a4: (None, 'channel_participant_creator', None), # -2138237532
+        0xe3e2e1f9: (None, 'channel_participant_creator_layer103', None), # -471670279
         0x98192d61: (None, 'channel_participant_editor_layer67', None),  # -1743180447
         0x8cc5e69a: (None, 'channel_participant_kicked_layer67', None),  # -1933187430
         0x91057fef: (None, 'channel_participant_moderator_layer67', None),  # -1861910545
@@ -4797,6 +4909,7 @@ class tblob(): # pylint: disable=C0103
         0xa3b54985: (None, 'channel_participants_kicked', None),  # -1548400251
         0xde3f3c79: (None, 'channel_participants_recent', None),  # -566281095
         0x0656ac4b: (None, 'channel_participants_search', None),  # 106343499
+        0x4df30834: (channel_layer104_struct, 'channel_layer104', None),  # 1307772980
         0x4b1b7506: (channel_layer48_struct, 'channel_layer48', None),  # 1260090630
         0xa14dca52: (channel_layer67_struct, 'channel_layer67', None),  # -1588737454
         0x0cb44b1c: (channel_layer72_struct, 'channel_layer72', None),  # 213142300
@@ -4808,20 +4921,27 @@ class tblob(): # pylint: disable=C0103
         0xf56ee2a8: (None, 'channels_channel_participants', None),  # -177282392
         0xf0173fe9: (None, 'channels_channel_participants_not_modified', None),  # -266911767
         0x10e6bd2c: (None, 'channels_check_username', None),  # 283557164
-        0xf4893d7f: (None, 'channels_create_channel', None),  # -192332417
+        0x3d5fb10f: (None, 'channels_create_channel', None), # 1029681423
+        0xf4893d7f: (None, 'channels_create_channel_v_5_6_2', None),  # -192332417
         0xc0111fe3: (None, 'channels_delete_channel', None),  # -1072619549
         0xaf369d42: (None, 'channels_delete_history', None),  # -1355375294
         0x84c1fd4e: (None, 'channels_delete_messages', None),  # -2067661490
         0xd10dd71b: (None, 'channels_delete_user_history', None),  # -787622117
-        0x70f893ba: (None, 'channels_edit_admin', None),  # 1895338938
+        0xd33c8902: (None, 'channels_edit_admin', None), # -751007486
+        0x70f893ba: (None, 'channels_edit_admin_v_5_6_2', None),  # 1895338938
         0x72796912: (None, 'channels_edit_banned', None),  # 1920559378
+        0x8f38cd1f: (None, 'channels_edit_creator', None), # -1892102881
+        0x58e63f6d: (None, 'channels_edit_location', None), # 1491484525
         0xf12e57c9: (None, 'channels_edit_photo', None),  # -248621111
         0x566decd0: (None, 'channels_edit_title', None),  # 1450044624
         0xc846d22d: (None, 'channels_export_message_link', None),  # -934882771
         0x33ddf480: (None, 'channels_get_admin_log', None),  # 870184064
-        0x8d8d82d7: (None, 'channels_get_admined_public_channels', None),  # -1920105769
+        0xf8b036af: (None, 'channels_get_admined_public_channels', None), # -122669393
+        0x8d8d82d7: (None, 'channels_get_admined_public_channels_v_5_6_2', None),  # -1920105769
         0x0a7f6bbb: (None, 'channels_get_channels', None),  # 176122811
         0x08736a09: (None, 'channels_get_full_channel', None),  # 141781513
+        0xf5dad378: (None, 'channels_get_groups_for_discussion', None), # -170208392
+        0x11e831ee: (None, 'channels_get_inactive_channels', None), # 300429806
         0x93d7b347: (None, 'channels_get_messages', None),  # -1814580409
         0x546dd7a6: (None, 'channels_get_participant', None),  # 1416484774
         0x123e05e9: (None, 'channels_get_participants', None),  # 306054633
@@ -4831,9 +4951,12 @@ class tblob(): # pylint: disable=C0103
         0xcc104937: (None, 'channels_read_history', None),  # -871347913
         0xeab5dc38: (None, 'channels_read_message_contents', None),  # -357180360
         0xfe087810: (None, 'channels_report_spam', None),  # -32999408
+        0x43a0a7e2: (None, 'channels_search_posts', None), # 1134602210
+        0x40582bb2: (None, 'channels_set_discussion_group', None), # 1079520178
         0xea8ca4f9: (None, 'channels_set_stickers', None),  # -359881479
         0xeabbb94c: (None, 'channels_toggle_pre_history_hidden', None),  # -356796084
         0x1f69b606: (None, 'channels_toggle_signatures', None),  # 527021574
+        0xedd49ef0: (None, 'channels_toggle_slow_mode', None), # -304832784
         0x3514b3de: (None, 'channels_update_username', None),  # 890549214
         0x3bda1bde: (chat_struct, 'chat', None),  # 1004149726
         0x5fb224d5: (chat_admin_rights_struct, 'chat_admin_rights', None),  # 1605510357
@@ -4868,7 +4991,8 @@ class tblob(): # pylint: disable=C0103
         0x6e9c9bc7: (chat_old_struct, 'chat_old', None),  # 1855757255
         0x7312bc48: (chat_old2_struct, 'chat_old2', None),  # 1930607688
         0x6643b654: (None, 'client_dh_inner_data_v_0_1_317'),  # 1715713620
-        0x302f59f3: (None, 'code_settings', None),  # 808409587
+        0xdebebe83: (None, 'code_settings', None), # -557924733
+        0x302f59f3: (None, 'code_settings_v_5_6_2', None),  # 808409587
         0x330b4067: (None, 'config', None),  # 856375399
         0x232d5905: (None, 'config_v_0_1_317'),  # 590174469
         0xe6ca25f6: (None, 'config_v_5_5_0', None),  # -422959626
@@ -4882,6 +5006,8 @@ class tblob(): # pylint: disable=C0103
         0xd3680c61: (None, 'contact_status', None),  # -748155807
         0xaa77b873: (None, 'contact_status_v_0_1_317'),  # -1434994573
         0x3de191a1: (None, 'contact_suggested_v_0_1_317'),  # 1038193057
+        0xf831a20f: (None, 'contacts_accept_contact', None), # -130964977
+        0xe8f463d0: (None, 'contacts_add_contact', None), # -386636848
         0x332b49fc: (None, 'contacts_block', None),  # 858475004
         0x1c138d15: (None, 'contacts_blocked', None),  # 471043349
         0x900802a1: (None, 'contacts_blocked_slice', None),  # -1878523231
@@ -4890,7 +5016,8 @@ class tblob(): # pylint: disable=C0103
         0xb74ba9d2: (None, 'contacts_contacts_not_modified', None),  # -1219778094
         0x1013fd9e: (None, 'contacts_delete_by_phones', None),  # 269745566
         0x8e953744: (None, 'contacts_delete_contact', None),  # -1902823612
-        0x59ab389e: (None, 'contacts_delete_contacts', None),  # 1504393374
+        0x096a0e00: (None, 'contacts_delete_contacts', None), # 157945344
+        0x59ab389e: (None, 'contacts_delete_contacts_v_5_6_2', None),  # 1504393374
         0x84e53737: (None, 'contacts_export_card', None),  # -2065352905
         0x1bea8ce1: (None, 'contacts_foreign_link_mutual_v_0_1_317'),  # 468356321
         0xa7801f47: (None, 'contacts_foreign_link_requested_v_0_1_317'),  # -1484775609
@@ -4900,6 +5027,7 @@ class tblob(): # pylint: disable=C0103
         0xf57c350f: (None, 'contacts_get_blocked', None),  # -176409329
         0xc023849f: (None, 'contacts_get_contacts', None),  # -1071414113
         0x22c6aa08: (None, 'contacts_get_contacts_v_0_1_317'),  # 583445000
+        0xd348bc44: (None, 'contacts_get_located', None), # -750207932
         0xc4a353ee: (None, 'contacts_get_statuses', None),  # -995929106
         0xcd773428: (None, 'contacts_get_suggested_v_0_1_317'),  # -847825880
         0xd4982db5: (None, 'contacts_get_top_peers', None),  # -728224331
@@ -4908,7 +5036,7 @@ class tblob(): # pylint: disable=C0103
         0xda30b32d: (None, 'contacts_import_contacts_v_0_1_317'),  # -634342611
         0x77d01c3b: (None, 'contacts_imported_contacts', None),  # 2010127419
         0xd1cd0a4c: (None, 'contacts_imported_contacts_v_0_1_317'),  # -775091636
-        0x3ace484c: (contacts_link_struct, 'contacts_link', None),  # 986597452
+        0x3ace484c: (contacts_link_layer101_struct, 'contacts_link_layer101', None),  # 986597452
         0xeccea3f5: (None, 'contacts_link_v_0_317'),  # -322001931
         0xc240ebd9: (None, 'contacts_my_link_contact_v_0_1_317'),  # -1035932711
         0xd22a1c60: (None, 'contacts_my_link_empty_v_0_1_317'),  # -768992160
@@ -4972,6 +5100,7 @@ class tblob(): # pylint: disable=C0103
         0x3bcbf734: (None, 'dh_gen_ok_v_0_1_317'),  # 1003222836
         0x46dc1fb9: (None, 'dh_gen_retry_v_0_1_317'),  # 1188831161
         0x2c171f72: (None, 'dialog', None),  # 739712882
+        0x14f9162c: (None, 'dialog_filter', None), # 351868460
         0x71bd134c: (None, 'dialog_folder', None),  # 1908216652
         0x214a8cdf: (None, 'dialog_v_0_1_317'),  # 558533855
         0xe4def5db: (None, 'dialog_v_5_5_0', None),  # -45515011
@@ -5119,6 +5248,7 @@ class tblob(): # pylint: disable=C0103
         0x890c3d89: (None, 'input_bot_inline_message_id', None),  # -1995686519
         0xafeb712e: (input_channel_struct, 'input_channel', None),  # -1343524562
         0xee8c1e86: (input_channel_empty_struct, 'input_channel_empty', None),  # -292807034
+        0x2a286531: (None, 'input_channel_from_message', None), # 707290417
         0x8953ad37: (None, 'input_chat_photo', None),  # -1991004873
         0xb2e1bf08: (None, 'input_chat_photo_v_0_1_317'),  # -1293828344
         0x1ca48f57: (None, 'input_chat_photo_empty', None),  # 480546647
@@ -5152,6 +5282,7 @@ class tblob(): # pylint: disable=C0103
         0xf3b7acc9: (None, 'input_geo_point', None),  # -206066487
         0xe4c123d6: (None, 'input_geo_point_empty', None),  # -457104426
         0xd8aa840f: (input_group_call_struct, 'input_group_call', None),  # -659913713
+        0xd02e7fd4: (None, 'input_keyboard_button_url_auth', None), # -802258988
         0x89938781: (None, 'input_media_audio_v_0_1_317'),  # -1986820223
         0xf8ab7dfb: (None, 'input_media_contact', None),  # -122978821
         0xa6e45987: (None, 'input_media_contact_v_0_1_317'),  # -1494984313
@@ -5166,7 +5297,8 @@ class tblob(): # pylint: disable=C0103
         0xb3ba0635: (None, 'input_media_photo', None),  # -1279654347
         0xe5bbfe1a: (None, 'input_media_photo_external', None),  # -440664550
         0x8f2ab2ec: (None, 'input_media_photo_v_0_1_317'),  # -1893027092
-        0x06b3765b: (None, 'input_media_poll', None),  # 112424539
+        0xabe9ca25: (None, 'input_media_poll', None), # -1410741723
+        0x06b3765b: (None, 'input_media_poll_v_5_6_2', None),  # 112424539
         0x61a6d436: (None, 'input_media_uploaded_audio_v_0_1_317'),  # 1638323254
         0x5b38c6c1: (None, 'input_media_uploaded_document', None),  # 1530447553
         0x34e794bd: (None, 'input_media_uploaded_document_v_0_1_317'),  # 887592125
@@ -5205,6 +5337,7 @@ class tblob(): # pylint: disable=C0103
         0xca05d50e: (None, 'input_payment_credentials_android_pay', None),  # -905587442
         0xc10eb2cf: (None, 'input_payment_credentials_saved', None),  # -1056001329
         0x20adaef8: (None, 'input_peer_channel', None),  # 548253432
+        0x9c95f7bb: (None, 'input_peer_channel_from_message', None), # -1667893317
         0x179be863: (None, 'input_peer_chat', None),  # 396093539
         0x1023dbe8: (None, 'input_peer_contact_v_0_1_317'),  # 270785512
         0x7f3b18ea: (None, 'input_peer_empty', None),  # 2134579434
@@ -5216,28 +5349,34 @@ class tblob(): # pylint: disable=C0103
         0x27d69997: (None, 'input_peer_photo_file_location', None),  # 668375447
         0x7da07ec9: (None, 'input_peer_self', None),  # 2107670217
         0x7b8e7de6: (None, 'input_peer_user', None),  # 2072935910
+        0x17bae2e6: (None, 'input_peer_user_from_message', None), # 398123750
         0x1e36fded: (None, 'input_phone_call', None),  # 506920429
         0xf392b7f4: (None, 'input_phone_contact', None),  # -208488460
         0x3bb3b94a: (None, 'input_photo', None),  # 1001634122
-        0x40181ffe: (None, 'input_photo_file_location', None),  # 1075322878
         0xd9915325: (None, 'input_photo_crop_v_0_1_317'),  # -644787419
         0xade6b004: (None, 'input_photo_crop_auto_v_0_1_317'),  # -1377390588
         0x1cd7bf0d: (None, 'input_photo_empty', None),  # 483901197
+        0x40181ffe: (None, 'input_photo_file_location', None),  # 1075322878
         0xfb95c6c4: (None, 'input_photo_v_0_1_317'),  # -74070332
+        0xd1219bdd: (None, 'input_privacy_key_added_by_phone', None), # -786326563
         0xbdfb0426: (None, 'input_privacy_key_chat_invite', None),  # -1107622874
         0xa4dd4c08: (None, 'input_privacy_key_forwards', None),  # -1529000952
         0xfabadc5f: (None, 'input_privacy_key_phone_call', None),  # -88417185
+        0x0352dafa: (None, 'input_privacy_key_phone_number', None), # 55761658
         0xdb9e70d2: (None, 'input_privacy_key_phone_p2_p', None),  # -610373422
         0x5719bacc: (None, 'input_privacy_key_profile_photo', None),  # 1461304012
         0x4f96cb18: (None, 'input_privacy_key_status_timestamp', None),  # 1335282456
         0x184b35ce: (None, 'input_privacy_value_allow_all', None),  # 407582158
+        0x4c81c1ba: (None, 'input_privacy_value_allow_chat_participants', None), # 1283572154
         0x0d09e07b: (None, 'input_privacy_value_allow_contacts', None),  # 218751099
         0x131cc67f: (None, 'input_privacy_value_allow_users', None),  # 320652927
         0xd66b66c9: (None, 'input_privacy_value_disallow_all', None),  # -697604407
+        0xd82363af: (None, 'input_privacy_value_disallow_chat_participants', None), # -668769361
         0x0ba52007: (None, 'input_privacy_value_disallow_contacts', None),  # 195371015
         0x90110467: (None, 'input_privacy_value_disallow_users', None),  # -1877932953
         0xadf44ee3: (None, 'input_report_reason_child_abuse', None),  # -1376497949
         0x9b89f93a: (None, 'input_report_reason_copyright', None),  # -1685456582
+        0xdbd4feed: (None, 'input_report_reason_geo_irrelevant', None), # -606798099
         0xe1746d0a: (None, 'input_report_reason_other', None),  # -512463606
         0x2e59d922: (None, 'input_report_reason_pornography', None),  # 777640226
         0x58dbcab8: (None, 'input_report_reason_spam', None),  # 1490799288
@@ -5247,21 +5386,27 @@ class tblob(): # pylint: disable=C0103
         0x3334b0f0: (None, 'input_secure_file_uploaded', None),  # 859091184
         0xdb21d0a7: (None, 'input_secure_value', None),  # -618540889
         0x1cc6e91f: (None, 'input_single_media', None),  # 482797855
+        0x028703c8: (TODO, 'input_sticker_set_animated_emoji', None), # 42402760
         0xffb62b95: (input_sticker_set_empty_struct, 'input_sticker_set_empty', None),  # -4838507
         0x9de7a269: (input_sticker_set_id_struct, 'input_sticker_set_id', None),  # -1645763991
         0x861cc8a0: (input_sticker_set_short_name_struct, 'input_sticker_set_short_name', None),  # -2044933984
         0x0dbaeae9: (None, 'input_sticker_set_thumb', None),  # 230353641
         0x0438865b: (None, 'input_stickered_media_document', None),  # 70813275
         0x4a992157: (None, 'input_stickered_media_photo', None),  # 1251549527
+        0x3c5693e9: (None, 'input_theme', None), # 1012306921
+        0xbd507cd1: (None, 'input_theme_settings', None), # -1118798639
+        0xf5890df1: (None, 'input_theme_slug', None), # -175567375
         0xd8292816: (input_user_struct, 'input_user', None),  # -668391402
         0x86e94f65: (None, 'input_user_contact_v_0_1_317'),  # -2031530139
         0xb98886cf: (input_user_empty_struct, 'input_user_empty', None),  # -1182234929
         0x655e74ff: (None, 'input_user_foreign_v_0_1_317'),  # 1700689151
+        0x2d117597: (None, 'input_user_from_message', None), # 756118935
         0xf7c1b13f: (None, 'input_user_self', None),  # -138301121
         0xee579652: (None, 'input_video_v_0_1_317'),  # -296249774
         0x5508ec75: (None, 'input_video_empty_v_0_1_317'),  # 1426648181
         0x3d0364ec: (None, 'input_video_file_location_v_0_1_317'),  # 1023632620
         0xe630b979: (None, 'input_wall_paper', None),  # -433014407
+        0x8427bbac: (None, 'input_wall_paper_no_file', None), # -2077770836
         0x72091c80: (None, 'input_wall_paper_slug', None),  # 1913199744
         0x9bed434d: (None, 'input_web_document', None),  # -1678949555
         0x9f2221c9: (None, 'input_web_file_geo_point_location', None),  # -1625153079
@@ -5282,9 +5427,11 @@ class tblob(): # pylint: disable=C0103
         0x50f41ccf: (keyboard_button_game_struct, 'keyboard_button_game', None),  # 1358175439
         0xfc796b3f: (keyboard_button_request_geo_location_struct, 'keyboard_button_request_geo_location', None),  # -59151553
         0xb16a6c29: (keyboard_button_request_phone_struct, 'keyboard_button_request_phone', None),  # -1318425559
+        0xbbc7515d: (TODO, 'keyboard_button_request_poll', None), # -1144565411
         0x77608b83: (keyboard_button_row_struct, 'keyboard_button_row', None),  # 2002815875
         0x0568a748: (keyboard_button_switch_inline_struct, 'keyboard_button_switch_inline', None),  # 90744648
         0x258aff05: (keyboard_button_url_struct, 'keyboard_button_url', None),  # 629866245
+        0x10b78d29: (TODO, 'keyboard_button_url_auth', None), # 280464681
         0xcb296bf8: (None, 'labeled_price', None),  # -886477832
         0xf385c1f6: (None, 'lang_pack_difference', None),  # -209337866
         0xeeca5ce3: (None, 'lang_pack_language', None),  # -288727837
@@ -5297,7 +5444,7 @@ class tblob(): # pylint: disable=C0103
         0x800fd57d: (None, 'langpack_get_languages', None),  # -2146445955
         0x2e1ee318: (None, 'langpack_get_strings', None),  # 773776152
         0xaed6dbb2: (mask_coords_struct, 'mask_coords', None),  # -1361650766
-        0x44f9b43d: (message_struct, 'message', None),  # 1157215293
+        0x452c0e65: (message_struct, 'message', None), # 1160515173
         0xabe9affe: (message_action_bot_allowed_struct, 'message_action_bot_allowed', None),  # -1410748418
         0x95d2ac92: (message_action_channel_create_struct, 'message_action_channel_create', None),  # -1781355374
         0xb055eaee: (message_action_channel_migrate_from_struct, 'message_action_channel_migrate_from', None),  # -1336546578
@@ -5330,6 +5477,8 @@ class tblob(): # pylint: disable=C0103
         0x55555551: (message_action_user_updated_photo_struct, 'message_action_user_updated_photo', None),  # 1431655761
         0x83e5de54: (message_empty_struct, 'message_empty', None),  # -2082087340
         0x555555f7: (message_encrypted_action_struct, 'message_encrypted_action', None),  # 1431655927
+        0x761e6af4: (TODO, 'message_entity_bank_card', None), # 1981704948
+        0x020df5d0: (TODO, 'message_entity_blockquote', None), # 34469328
         0xbd610bc9: (message_entity_bold_struct, 'message_entity_bold', None),  # -1117713463
         0x6cef8ac7: (message_entity_bot_command_struct, 'message_entity_bot_command', None),  # 1827637959
         0x4c4e743f: (message_entity_cashtag_struct, 'message_entity_cashtag', None),  # 1280209983
@@ -5341,7 +5490,9 @@ class tblob(): # pylint: disable=C0103
         0x352dca58: (message_entity_mention_name_struct, 'message_entity_mention_name', None),  # 892193368
         0x9b69e34b: (message_entity_phone_struct, 'message_entity_phone', None),  # -1687559349
         0x73924be0: (message_entity_pre_struct, 'message_entity_pre', None),  # 1938967520
+        0xbf0693d4: (TODO, 'message_entity_strike', None), # -1090087980
         0x76a6d327: (message_entity_text_url_struct, 'message_entity_text_url', None),  # 1990644519
+        0x9c4e7e8b: (TODO, 'message_entity_underline', None), # -1672577397
         0xbb92ba95: (message_entity_unknown_struct, 'message_entity_unknown', None),  # -1148011883
         0x6ed02538: (message_entity_url_struct, 'message_entity_url', None),  # 1859134776
         0x05f46804: (None, 'message_forwarded_old', None),  # 99903492
@@ -5375,10 +5526,19 @@ class tblob(): # pylint: disable=C0103
         0xa2d24290: (message_media_video_old_struct, 'message_media_video_old', None),  # -1563278704
         0xa32dd600: (message_media_web_page_struct, 'message_media_web_page', None),  # -1557277184
         0x0ae30253: (None, 'message_range', None),  # 182649427
+        0xb87a24d1: (None, 'message_reactions', None), # -1199954735
+        0xe3ae6108: (None, 'message_reactions_list', None), # -475111160
         0x9e19a1f6: (message_service_struct, 'message_service', None),  # -1642487306
         0xc06b9607: (message_service_layer48_struct, 'message_service_layer48', None),  # -1066691065
         0x9f8d60bb: (message_service_old_struct, 'message_service_old', None),  # -1618124613
         0x1d86f70e: (None, 'message_service_old2', None),  # 495384334
+        0xd267dcbc: (None, 'message_user_reaction', None), # -764945220
+        0xa28e5559: (None, 'message_user_vote', None), # -1567730343
+        0x36377430: (None, 'message_user_vote_input_option', None), # 909603888
+        0x0e8fe0de: (None, 'message_user_vote_multiple', None), # 244310238
+        0x44f9b43d: (message_layer104_struct, 'message_layer104', None),  # 1157215293
+        0x1c9b1027: (TODO, 'message_layer104_2', None), # 479924263
+        0x9789dac4: (TODO, 'message_layer104_3', None), # -1752573244
         0xc992e15c: (None, 'message_layer47', None),  # -913120932
         0xc09be45f: (message_layer68_struct, 'message_layer68', None),  # -1063525281
         0x90dddc11: (message_layer72_struct, 'message_layer72', None),  # -1864508399
@@ -5393,6 +5553,7 @@ class tblob(): # pylint: disable=C0103
         0x555555f9: (None, 'message_secret_layer72', None),  # 1431655929
         0x555555f8: (None, 'message_secret_old', None),  # 1431655928
         0x3dbc0415: (None, 'messages_accept_encryption', None),  # 1035731989
+        0xf729ea98: (None, 'messages_accept_url_auth', None), # -148247912
         0xf9a0aa09: (None, 'messages_add_chat_user', None),  # -106911223
         0x2ee9ee9e: (None, 'messages_add_chat_user_v_0_1_317'),  # 787082910
         0xb45c69d1: (None, 'messages_affected_history', None),  # -1269012015
@@ -5420,6 +5581,7 @@ class tblob(): # pylint: disable=C0103
         0x1c015b09: (None, 'messages_delete_history', None),  # 469850889
         0xf4f8fb61: (None, 'messages_delete_history_v_0_1_317'),  # -185009311
         0xe58e95d2: (None, 'messages_delete_messages', None),  # -443640366
+        0x59ae2b16: (None, 'messages_delete_scheduled_messages', None), # 1504586518
         0x14f2dd0a: (None, 'messages_delete_messages_v_0_1_317'),  # 351460618
         0x2c221edd: (None, 'messages_dh_config', None),  # 740433629
         0xc0e24635: (None, 'messages_dh_config_not_modified', None),  # -1058912715
@@ -5434,7 +5596,8 @@ class tblob(): # pylint: disable=C0103
         0xd881821d: (None, 'messages_edit_chat_photo_v_0_1_317'),  # -662601187
         0xdc452855: (None, 'messages_edit_chat_title', None),  # -599447467
         0xb4bc68b5: (None, 'messages_edit_chat_title_v_0_1_317'),  # -1262720843
-        0xd116f31e: (None, 'messages_edit_message', None),  # -787025122
+        0x48f71778: (None, 'messages_edit_message', None), # 1224152952
+        0xd116f31e: (None, 'messages_edit_message_v_5_6_2', None),  # -787025122
         0x0df7534c: (None, 'messages_export_chat_invite', None),  # 234312524
         0xb9ffc55b: (None, 'messages_fave_sticker', None),  # -1174420133
         0xf37f2f16: (None, 'messages_faved_stickers', None),  # -209768682
@@ -5443,8 +5606,9 @@ class tblob(): # pylint: disable=C0103
         0x04ede3cf: (None, 'messages_featured_stickers_not_modified', None),  # 82699215
         0x33963bf9: (None, 'messages_forward_message', None),  # 865483769
         0x03f3f4f2: (None, 'messages_forward_message_v_0_1_317'),  # 66319602
-        0x708e0195: (None, 'messages_forward_messages', None),  # 1888354709
+        0xd9fee60e: (None, 'messages_forward_messages', None), # -637606386
         0x514cd10f: (None, 'messages_forward_messages_v_0_1_317'),  # 1363988751
+        0x708e0195: (None, 'messages_forward_messages_v_5_6_2', None),  # 1888354709
         0x450a1c0a: (None, 'messages_found_gifs', None),  # 1158290442
         0x5108d648: (None, 'messages_found_sticker_sets', None),  # 1359533640
         0x0d54b65d: (None, 'messages_found_sticker_sets_not_modified', None),  # 223655517
@@ -5457,6 +5621,7 @@ class tblob(): # pylint: disable=C0103
         0x3c6aa187: (None, 'messages_get_chats', None),  # 1013621127
         0x0d0a48c4: (None, 'messages_get_common_chats', None),  # 218777796
         0x26cf8950: (None, 'messages_get_dh_config', None),  # 651135312
+        0xf19ed96d: (None, 'messages_get_dialog_filters', None), # -241247891
         0x22e24e22: (None, 'messages_get_dialog_unread_marks', None),  # 585256482
         0xa0ee3b73: (None, 'messages_get_dialogs', None),  # -1594999949
         0xb098aee6: (None, 'messages_get_dialogs_v_5_5_0', None),  # -1332171034
@@ -5476,7 +5641,9 @@ class tblob(): # pylint: disable=C0103
         0x0f635e1b: (None, 'messages_get_inline_game_high_scores', None),  # 258170395
         0x65b8c79f: (None, 'messages_get_mask_stickers', None),  # 1706608543
         0xfda68d36: (None, 'messages_get_message_edit_data', None),  # -39416522
+        0x15b1376a: (None, 'messages_get_message_reactions_list', None), # 363935594
         0x4222fa74: (None, 'messages_get_messages', None),  # 1109588596
+        0x8bba90e6: (None, 'messages_get_messages_reactions', None), # -1950707482
         0xc4c8a55d: (None, 'messages_get_messages_views', None),  # -993483427
         0x6e2be050: (None, 'messages_get_onlines', None),  # 1848369232
         0xe470bcfd: (None, 'messages_get_peer_dialogs', None),  # -462373635
@@ -5484,26 +5651,34 @@ class tblob(): # pylint: disable=C0103
         0xd6b94df2: (None, 'messages_get_pinned_dialogs', None),  # -692498958
         0xe254d64e: (None, 'messages_get_pinned_dialogs_v_5_5_0', None),  # -497756594
         0x73bb643b: (None, 'messages_get_poll_results', None),  # 1941660731
+        0xb86e380e: (None, 'messages_get_poll_votes', None), # -1200736242
         0xbbc45b09: (None, 'messages_get_recent_locations', None),  # -1144759543
         0x5ea192c9: (None, 'messages_get_recent_stickers', None),  # 1587647177
         0x83bf3d52: (None, 'messages_get_saved_gifs', None),  # -2084618926
+        0xe2c2685b: (None, 'messages_get_scheduled_history', None), # -490575781
+        0xbdbb0464: (None, 'messages_get_scheduled_messages', None), # -1111817116
+        0x732eef00: (None, 'messages_get_search_counters', None), # 1932455680
         0x812c2ae6: (None, 'messages_get_stats_url', None),  # -2127811866
         0x2619a90e: (None, 'messages_get_sticker_set', None),  # 639215886
         0x043d4f2c: (None, 'messages_get_stickers', None),  # 71126828
         0x46578472: (None, 'messages_get_unread_mentions', None),  # 1180140658
         0x32ca8f91: (None, 'messages_get_web_page', None),  # 852135825
         0x8b68b0cc: (None, 'messages_get_web_page_preview', None),  # -1956073268
-        0xa8f1709b: (None, 'messages_hide_report_spam', None),  # -1460572005
+        0x4facb138: (None, 'messages_hide_peer_settings_bar', None), # 1336717624
+        0xa8f1709b: (None, 'messages_hide_report_spam_v_5_6_2', None),  # -1460572005
         0x9a3bfd99: (None, 'messages_high_scores', None),  # -1707344487
         0x6c50051c: (None, 'messages_import_chat_invite', None),  # 1817183516
+        0xa927fec5: (None, 'messages_inactive_chats', None), # -1456996667
         0xc78fe460: (None, 'messages_install_sticker_set', None),  # -946871200
         0xc286d98f: (None, 'messages_mark_dialog_unread', None),  # -1031349873
         0x26b5dde6: (None, 'messages_message_edit_data', None),  # 649453030
         0x3f4e0648: (None, 'messages_message_empty', None),  # 1062078024
         0xff90c417: (None, 'messages_message_v_0_1_317'),  # -7289833
         0x8c718e87: (None, 'messages_messages', None),  # -1938715001
-        0xa6c47aaa: (None, 'messages_messages_slice', None),  # -1497072982
+        0x74535f21: (None, 'messages_messages_not_modified', None), # 1951620897
+        0xc8edce1e: (None, 'messages_messages_slice', None), # -923939298
         0x0b446ae3: (None, 'messages_messages_slice_v_0_1_317'),  # 189033187
+        0xa6c47aaa: (None, 'messages_messages_slice_v_5_6_2', None),  # -1497072982
         0x15a3b8e3: (None, 'messages_migrate_chat', None),  # 363051235
         0x3371c354: (None, 'messages_peer_dialogs', None),  # 863093588
         0x7f4b690a: (None, 'messages_read_encrypted_history', None),  # 2135648522
@@ -5524,6 +5699,7 @@ class tblob(): # pylint: disable=C0103
         0x4b0c8c0f: (None, 'messages_report_encrypted_spam', None),  # 1259113487
         0xcf1592db: (None, 'messages_report_spam', None),  # -820669733
         0xf64daf43: (None, 'messages_request_encryption', None),  # -162681021
+        0xe33f5613: (None, 'messages_request_url_auth', None), # -482388461
         0x395f9d7e: (None, 'messages_restore_messages_v_0_1_317'),  # 962567550
         0xbc39e14b: (None, 'messages_save_draft', None),  # -1137057461
         0x327a30cb: (None, 'messages_save_gif', None),  # 846868683
@@ -5531,22 +5707,29 @@ class tblob(): # pylint: disable=C0103
         0x2e0709a5: (None, 'messages_saved_gifs', None),  # 772213157
         0xe8025ca2: (None, 'messages_saved_gifs_not_modified', None),  # -402498398
         0x8614ef68: (None, 'messages_search', None),  # -2045448344
+        0xe844ebff: (None, 'messages_search_counter', None), # -398136321
         0x07e9f2ab: (None, 'messages_search_v_0_1_317'),  # 132772523
         0xbf9a776b: (None, 'messages_search_gifs', None),  # -1080395925
-        0x9e3cacb0: (None, 'messages_search_global', None),  # -1640190800
+        0xbf7225a4: (None, 'messages_search_global', None), # -1083038300
+        0x9e3cacb0: (None, 'messages_search_global_v_5_6_2', None),  # -1640190800
         0xc2b7d08b: (None, 'messages_search_sticker_sets', None),  # -1028140917
-        0xbf73f4da: (None, 'messages_send_broadcast', None),  # -1082919718
+        0xbf73f4da: (None, 'messages_send_broadcast_v_5_6_2', None),  # -1082919718
         0x41bb0972: (None, 'messages_send_broadcast_v_0_1_317'),  # 1102776690
         0xa9776773: (None, 'messages_send_encrypted', None),  # -1451792525
         0x9a901b66: (None, 'messages_send_encrypted_file', None),  # -1701831834
         0xcacacaca: (None, 'messages_send_encrypted_multi_media', None),  # -892679478
         0x32d439a4: (None, 'messages_send_encrypted_service', None),  # 852769188
-        0xb16e06fe: (None, 'messages_send_inline_bot_result', None),  # -1318189314
-        0xb8d1262b: (None, 'messages_send_media', None),  # -1194252757
+        0x220815b0: (None, 'messages_send_inline_bot_result', None), # 570955184
+        0xb16e06fe: (None, 'messages_send_inline_bot_result_v_5_6_2', None),  # -1318189314
+        0x3491eba9: (None, 'messages_send_media', None), # 881978281
         0xa3c85d76: (None, 'messages_send_media_v_0_1_317'),  # -1547149962
-        0xfa88427a: (None, 'messages_send_message', None),  # -91733382
+        0xb8d1262b: (None, 'messages_send_media_v_5_6_2', None),  # -1194252757
+        0x520c3870: (None, 'messages_send_message', None), # 1376532592
         0x4cde0aab: (None, 'messages_send_message_v_0_1_317'),  # 1289620139
-        0x2095512f: (None, 'messages_send_multi_media', None),  # 546656559
+        0xfa88427a: (None, 'messages_send_message_v_5_6_2', None),  # -91733382
+        0x2095512f: (None, 'messages_send_multi_media_v_5_6_2', None),  # 546656559
+        0x25690ce4: (None, 'messages_send_reaction', None), # 627641572
+        0xbd38850a: (None, 'messages_send_scheduled_messages', None), # -1120369398
         0xc97df020: (None, 'messages_send_screenshot_notification', None),  # -914493408
         0x10ea6184: (None, 'messages_send_vote', None),  # 283795844
         0xd1f4d35c: (None, 'messages_sent_message_v_0_1_317'),  # -772484260
@@ -5570,10 +5753,14 @@ class tblob(): # pylint: disable=C0103
         0xe4599bbd: (None, 'messages_stickers', None),  # -463889475
         0xf1749a22: (None, 'messages_stickers_not_modified', None),  # -244016606
         0xa731e257: (None, 'messages_toggle_dialog_pin', None),  # -1489903017
+        0xb5052fea: (None, 'messages_toggle_sticker_sets', None), # -1257951254
         0xf96e55de: (None, 'messages_uninstall_sticker_set', None),  # -110209570
+        0x1ad4a04a: (None, 'messages_update_dialog_filter', None), # 450142282
+        0xc563c1e4: (None, 'messages_update_dialog_filters_order', None), # -983318044
         0xd2aaf7ec: (None, 'messages_update_pinned_message', None),  # -760547348
         0x5057c497: (None, 'messages_upload_encrypted_file', None),  # 1347929239
         0x519bc2b1: (None, 'messages_upload_media', None),  # 1369162417
+        0x0823f649: (None, 'messages_votes_list', None), # 136574537
         0x73f1f8dc: (None, 'msg_container_v_0_1_317'),  # 1945237724
         0xe06046b2: (None, 'msg_copy_v_0_1_317'),  # -530561358
         0x276d3ec6: (None, 'msg_detailed_info_v_0_1_317'),  # 661470918
@@ -5647,26 +5834,31 @@ class tblob(): # pylint: disable=C0103
         0xd45ab096: (None, 'password_kdf_algo_unknown', None),  # -732254058
         0x909c3f94: (None, 'payment_requested_info', None),  # -1868808300
         0xcdc27a1f: (None, 'payment_saved_credentials_card', None),  # -842892769
+        0x3e24e573: (None, 'payments_bank_card_data', None), # 1042605427
         0xd83d70c1: (None, 'payments_clear_saved_info', None),  # -667062079
+        0x2e79d779: (None, 'payments_get_bank_card_data', None), # 779736953
         0x99f09745: (None, 'payments_get_payment_form', None),  # -1712285883
         0xa092a980: (None, 'payments_get_payment_receipt', None),  # -1601001088
         0x227d824b: (None, 'payments_get_saved_info', None),  # 578650699
         0x3f56aea3: (None, 'payments_payment_form', None),  # 1062645411
         0x500911e1: (None, 'payments_payment_receipt', None),  # 1342771681
         0x4e5f810d: (None, 'payments_payment_result', None),  # 1314881805
-        0x6b56b921: (None, 'payments_payment_verfication_needed', None),  # 1800845601
+        0xd8411139: (None, 'payments_payment_verification_needed', None), # -666824391
+        0x6b56b921: (None, 'payments_payment_verfication_needed_v_5_6_2', None),  # 1800845601
         0xfb8fe43c: (None, 'payments_saved_info', None),  # -74456004
         0x2b8879b3: (None, 'payments_send_payment_form', None),  # 730364339
         0x770a8e74: (None, 'payments_validate_requested_info', None),  # 1997180532
         0xd1451883: (None, 'payments_validated_requested_info', None),  # -784000893
         0xbddde532: (peer_channel_struct, 'peer_channel', None),  # -1109531342
         0xbad0e5bb: (peer_chat_struct, 'peer_chat', None),  # -1160714821
+        0xca461b5d: (TODO_MAYBE, 'peer_located', None), # -901375139
         0x6d1ded88: (None, 'peer_notify_events_all_v_0_1_317'),  # 1830677896
         0xadd53cb3: (None, 'peer_notify_events_empty_v_0_1_317'),  # -1378534221
         0xaf509d20: (peer_notify_settings_struct, 'peer_notify_settings', None),  # -1353671392
         0x70a68512: (peer_notify_settings_empty_layer77_struct, 'peer_notify_settings_empty_layer77', None),  # 1889961234
         0x8d5e11ee: (peer_notify_settings_layer47_struct, 'peer_notify_settings_layer47', None),  # -1923214866
         0x9acda4c0: (peer_notify_settings_layer77_struct, 'peer_notify_settings_layer77', None),  # -1697798976
+        0xf8ec284b: (TODO_MAYBE, 'peer_self_located', None), # -118740917
         0x818426cd: (None, 'peer_settings', None),  # -2122045747
         0x9db1bc6d: (peer_user_struct, 'peer_user', None),  # -1649296275
         0x8742ae7f: (None, 'phone_call', None),  # -2025673089
@@ -5733,23 +5925,29 @@ class tblob(): # pylint: disable=C0103
         0xd5529d06: (poll_struct, 'poll', None),  # -716006138
         0x6ca9c2e9: (poll_answer_struct, 'poll_answer', None),  # 1823064809
         0x3b6ddad2: (poll_answer_voters_struct, 'poll_answer_voters', None),  # 997055186
-        0x5755785a: (poll_results_struct, 'poll_results', None),  # 1465219162
+        0xc87024a2: (TODO, 'poll_results', None), # -932174686
+        0x5755785a: (poll_results_layer108_struct, 'poll_results_layer108', None),  # 1465219162
         0x347773c5: (None, 'pong_v_0_1_317'),  # 880243653
         0x5ce14175: (None, 'popular_contact', None),  # 1558266229
         0x1e8caaeb: (None, 'post_address', None),  # 512535275
+        0x42ffd42b: (None, 'privacy_key_added_by_phone', None), # 1124062251
         0x500e6dfa: (None, 'privacy_key_chat_invite', None),  # 1343122938
         0x69ec56a3: (None, 'privacy_key_forwards', None),  # 1777096355
         0x3d662b7b: (None, 'privacy_key_phone_call', None),  # 1030105979
-        0x39491cc8: (None, 'privacy_key_phone_p2_p', None),  # 961092808
+        0xd19ae46d: (None, 'privacy_key_phone_number', None), # -778378131
+        0x39491cc8: (None, 'privacy_key_phone_p2p', None),  # 961092808
         0x96151fed: (None, 'privacy_key_profile_photo', None),  # -1777000467
         0xbc2eab30: (None, 'privacy_key_status_timestamp', None),  # -1137792208
         0x65427b82: (None, 'privacy_value_allow_all', None),  # 1698855810
+        0x18be796b: (None, 'privacy_value_allow_chat_participants', None), # 415136107
         0xfffe1bac: (None, 'privacy_value_allow_contacts', None),  # -123988
         0x4d5bbe0c: (None, 'privacy_value_allow_users', None),  # 1297858060
         0x8b73e763: (None, 'privacy_value_disallow_all', None),  # -1955338397
+        0xacae0690: (None, 'privacy_value_disallow_chat_participants', None), # -1397881200
         0xf888fa1a: (None, 'privacy_value_disallow_contacts', None),  # -125240806
         0x0c7f49b7: (None, 'privacy_value_disallow_users', None),  # 209668535
         0x5bb8e511: (None, 'proto_message_v_0_1_317'),  # 1538843921
+        0x6fb250d1: (None, 'reaction_count', None), # 1873957073
         0xa384b779: (None, 'received_notify_message', None),  # -1551583367
         0xa01b22f9: (None, 'recent_me_url_chat', None),  # -1608834311
         0xeb49081d: (None, 'recent_me_url_chat_invite', None),  # -347535331
@@ -5762,7 +5960,8 @@ class tblob(): # pylint: disable=C0103
         0x3502758c: (reply_keyboard_markup_struct, 'reply_keyboard_markup', None),  # 889353612
         0xd712e4be: (None, 'req_dh_params_v_0_1_317'),  # -686627650
         0x60469778: (None, 'req_pq_v_0_1_317'),  # 1615239032
-        0x05162463: (None, 'res_p_q_v_0_1_317'),  # 85337187
+        0x05162463: (None, 'res_pq_v_0_1_317'),  # 85337187
+        0xd072acb4: (None, 'restriction_reason', None), # -797791052
         0xa43ad8b7: (None, 'rpc_answer_dropped_v_0_1_317'),  # -1539647305
         0xcd78e586: (None, 'rpc_answer_dropped_running_v_0_1_317'),  # -847714938
         0x5e2ad36e: (None, 'rpc_answer_unknown_v_0_1_317'),  # 1579864942
@@ -5863,11 +6062,17 @@ class tblob(): # pylint: disable=C0103
         0xc7fb5e01: (text_superscript_struct, 'text_superscript', None),  # -939827711
         0xc12622c4: (text_underline_struct, 'text_underline', None),  # -1054465340
         0x3c2884c1: (text_url_struct, 'text_url', None),  # 1009288385
+        0x028f1114: (None, 'theme', None), # 42930452
+        0x483d270c: (None, 'theme_document_not_modified_layer106', None), # 1211967244
+        0x9c14984a: (None, 'theme_settings', None), # -1676371894
+        0xf7d90ce0: (None, 'theme_layer106', None), # -136770336
         0xedcdc05b: (None, 'top_peer', None),  # -305282981
         0x148677e2: (None, 'top_peer_category_bots_inline', None),  # 344356834
         0xab661b5b: (None, 'top_peer_category_bots_p_m', None),  # -1419371685
         0x161d9628: (None, 'top_peer_category_channels', None),  # 371037736
         0x0637b7ed: (None, 'top_peer_category_correspondents', None),  # 104314861
+        0xfbeec0f0: (None, 'top_peer_category_forward_chats', None), # -68239120
+        0xa8406ca9: (None, 'top_peer_category_forward_users', None), # -1472172887
         0xbd17a14a: (None, 'top_peer_category_groups', None),  # -1122524854
         0xfb834291: (None, 'top_peer_category_peers', None),  # -75283823
         0x1e76a78c: (None, 'top_peer_category_phone_calls', None),  # 511092620
@@ -5897,6 +6102,10 @@ class tblob(): # pylint: disable=C0103
         0xc37521c9: (None, 'update_delete_channel_messages', None),  # -1015733815
         0xa20db0e5: (None, 'update_delete_messages', None),  # -1576161051
         0xa92bfe26: (None, 'update_delete_messages_v_0_1_317'),  # -1456734682
+        0x90866cee: (None, 'update_delete_scheduled_messages', None), # -1870238482
+        0x26ffde7d: (None, 'update_dialog_filter', None), # 654302845
+        0xa5d72105: (None, 'update_dialog_filter_order', None), # -1512627963
+        0x3504914f: (None, 'update_dialog_filters', None), # 889491791
         0x6e6fe51c: (None, 'update_dialog_pinned', None),  # 1852826908
         0x19d27f3c: (None, 'update_dialog_pinned_v_5_5_0', None),  # 433225532
         0xe16459c3: (None, 'update_dialog_unread_mark', None),  # -513517117
@@ -5908,20 +6117,26 @@ class tblob(): # pylint: disable=C0103
         0xb4a2e88d: (None, 'update_encryption', None),  # -1264392051
         0xe511996d: (None, 'update_faved_stickers', None),  # -451831443
         0x19360dc0: (None, 'update_folder_peers', None),  # 422972864
+        0x871fb939: (None, 'update_geo_live_viewed', None), # -2027964103
         0x85fe86ed: (None, 'update_group_call', None),  # -2046916883
         0x057eaec8: (None, 'update_group_call_participant', None),  # 92188360
         0x56022f4d: (None, 'update_lang_pack', None),  # 1442983757
         0x46560264: (None, 'update_lang_pack_too_long', None),  # 1180041828
+        0x564fe691: (None, 'update_login_token', None), # 1448076945
         0x4e90bfd6: (None, 'update_message_i_d', None),  # 1318109142
         0xaca1657b: (None, 'update_message_poll', None),  # -1398708869
+        0x154798c3: (None, 'update_message_reactions', None), # 357013699
         0x8f06529a: (None, 'update_new_authorization_v_0_1_317'),  # -1895411046
         0x62ba04d9: (None, 'update_new_channel_message', None),  # 1656358105
         0x12bcbd9a: (None, 'update_new_encrypted_message', None),  # 314359194
         0x5a68e3f7: (None, 'update_new_geo_chat_message_v_0_1_317'),  # 1516823543
         0x1f2b0afd: (None, 'update_new_message', None),  # 522914557
         0x013abdb3: (None, 'update_new_message_v_0_1_317'),  # 20626867
+        0x39a51dfb: (None, 'update_new_scheduled_message', None), # 967122427
         0x688a30aa: (None, 'update_new_sticker_set', None),  # 1753886890
         0xbec268ef: (None, 'update_notify_settings', None),  # -1094555409
+        0xb4afcfb0: (None, 'update_peer_located', None), # -1263546448
+        0x6a7e7366: (None, 'update_peer_settings', None), # 1786671974
         0xab0f6b1e: (None, 'update_phone_call', None),  # -1425052898
         0xfa0f3ca2: (None, 'update_pinned_dialogs', None),  # -99664734
         0xea4cb65b: (None, 'update_pinned_dialogs_v_5_5_0', None),  # -364071333
@@ -5947,6 +6162,7 @@ class tblob(): # pylint: disable=C0103
         0x11f1331c: (None, 'update_short_sent_message', None),  # 301019932
         0x43ae3dec: (None, 'update_sticker_sets', None),  # 1135492588
         0x0bb2d201: (None, 'update_sticker_sets_order', None),  # 196268545
+        0x8216fba3: (None, 'update_theme', None), # -2112423005
         0x80ece81a: (None, 'update_user_blocked', None),  # -2131957734
         0xa7332b73: (None, 'update_user_name', None),  # -1489818765
         0xda22d9ad: (None, 'update_user_name_v_0_1_317'),  # -635250259
@@ -5979,14 +6195,18 @@ class tblob(): # pylint: disable=C0103
         0xf18cda44: (None, 'upload_file_cdn_redirect', None),  # -242427324
         0x2000bcc3: (None, 'upload_get_cdn_file', None),  # 536919235
         0x4da54231: (None, 'upload_get_cdn_file_hashes', None),  # 1302676017
-        0xe3a6cfb5: (None, 'upload_get_file', None),  # -475607115
+        0xb15a9afc: (None, 'upload_get_file', None), # -1319462148
+        0xe3a6cfb5: (None, 'upload_get_file_v_5_6_2', None),  # -475607115
         0xc7025931: (None, 'upload_get_file_hashes', None),  # -956147407
         0x24e6818d: (None, 'upload_get_web_file', None),  # 619086221
         0x9b2754a8: (None, 'upload_reupload_cdn_file', None),  # -1691921240
         0xde7b673d: (None, 'upload_save_big_file_part', None),  # -562337987
         0xb304a621: (None, 'upload_save_file_part', None),  # -1291540959
         0x21e753bc: (None, 'upload_web_file', None),  # 568808380
-        0x2e13f4c3: (user_struct, 'user', None),  # 773059779
+        0x8f8c0e4e: (None, 'url_auth_result_accepted', None), # -1886646706
+        0xa9d6db1f: (None, 'url_auth_result_default', None), # -1445536993
+        0x92d33a0e: (None, 'url_auth_result_request', None), # -1831650802
+        0x938458c1: (TODO, 'user', None), # -1820043071
         0xf2fb8319: (user_contact_old_struct, 'user_contact_old', None),  # -218397927
         0xcab35e18: (user_contact_old2_struct, 'user_contact_old2', None),  # -894214632
         0xb29ad7cc: (user_deleted_old_struct, 'user_deleted_old', None),  # -1298475060
@@ -5994,9 +6214,12 @@ class tblob(): # pylint: disable=C0103
         0x200250ba: (user_empty_struct, 'user_empty', None),  # 537022650
         0x5214c89d: (user_foreign_old_struct, 'user_foreign_old', None),  # 1377093789
         0x075cf7a8: (user_foreign_old2_struct, 'user_foreign_old2', None),  # 123533224
-        0x745559cc: (user_full_struct, 'user_full', None),  # 1951750604
+        0xedf17c12: (TODO, 'user_full', None), # -302941166
+        0x745559cc: (user_full_layer101_struct, 'user_full_layer101', None),  # 1951750604
         0x8ea4a881: (user_full_layer98_struct, 'user_full_layer98', None),  # -1901811583
         0x771095da: (None, 'user_full_v_0_1_317'),  # 1997575642
+        0x2e13f4c3: (user_layer104_struct, 'user_layer104', None),  # 773059779
+        0xd10d979a: (user_layer65_struct, 'user_layer65', None),  # -787638374
         0xecd75d8c: (user_profile_photo_struct, 'user_profile_photo', None),  # -321430132
         0x4f11bae1: (user_profile_photo_empty_struct, 'user_profile_photo_empty', None),  # 1326562017
         0xd559d8c8: (user_profile_photo_layer97_struct, 'user_profile_photo_layer97', None),  # -715532088
@@ -6012,7 +6235,6 @@ class tblob(): # pylint: disable=C0103
         0x008c703f: (user_status_offline_struct, 'user_status_offline', None),  # 9203775
         0xedb93949: (user_status_online_struct, 'user_status_online', None),  # -306628279
         0xe26f42f1: (user_status_recently_struct, 'user_status_recently', None),  # -496024847
-        0xd10d979a: (user_layer65_struct, 'user_layer65', None),  # -787638374
         0x22e49072: (user_old_struct, 'user_old', None),  # 585404530
         0xca30a5b1: (None, 'users_get_full_user', None),  # -902781519
         0x0d91a548: (None, 'users_get_users', None),  # 227648840
@@ -6024,19 +6246,28 @@ class tblob(): # pylint: disable=C0103
         0xee9f4a4d: (video_old3_struct, 'video_old3', None),  # -291550643
         0xa437c3ed: (None, 'wall_paper', None),  # -1539849235
         0xf04f91ec: (None, 'wall_paper_layer94', None),  # -263220756
-        0xa12f40b8: (None, 'wall_paper_settings', None),  # -1590738760
+        0x8af40b25: (None, 'wall_paper_no_file', None), # -1963717851
+        0x05086cf8: (None, 'wall_paper_settings', None), # 84438264
+        0xa12f40b8: (None, 'wall_paper_settings_layer106', None), # -1590738760
         0x63117f24: (None, 'wall_paper_solid_v_0_1_317'),  # 1662091044
         0xccb03657: (None, 'wall_paper_v_0_1_317'),  # -860866985
+        0x0b57f346: (None, 'wallet_get_key_secret_salt', None), # 190313286
+        0x764386d7: (None, 'wallet_lite_response', None), # 1984136919
+        0xdd484d64: (None, 'wallet_secret_salt', None), # -582464156
+        0xe2c9d33e: (None, 'wallet_send_lite_request', None), # -490089666
         0xcac943f2: (None, 'web_authorization', None),  # -892779534
         0x1c570ed1: (web_document_struct, 'web_document', None),  # 475467473
         0xf9c8bcc6: (web_document_no_proxy_struct, 'web_document_no_proxy', None),  # -104284986
         0xc61acbd8: (web_document_layer81_struct, 'web_document_layer81', None),  # -971322408
-        0x5f07b4bc: (web_page_struct, 'web_page', None),  # 1594340540
+        0xe89c45b2: (TODO, 'web_page', None), # -392411726
+        0x54b56617: (None, 'web_page_attribute_theme', None), # 1421174295
         0xeb1477e8: (web_page_empty_struct, 'web_page_empty', None),  # -350980120
+        0x5f07b4bc: (web_page_layer104_struct, 'web_page_layer104', None),  # 1594340540
+        0xfa64e172: (TODO, 'web_page_layer107', None), # -94051982
+        0xca820ed7: (web_page_layer58_struct, 'web_page_layer58', None),  # -897446185
         0x85849473: (web_page_not_modified_struct, 'web_page_not_modified', None),  # -2054908813
         0xc586da1c: (web_page_pending_struct, 'web_page_pending', None),  # -981018084
         0xd41a5167: (web_page_url_pending_struct, 'web_page_url_pending', None),  # -736472729
-        0xca820ed7: (web_page_layer58_struct, 'web_page_layer58', None),  # -897446185
         0xa31ea0b5: (web_page_old_struct, 'web_page_old', None),  # -1558273867
         0x1cb5c415: (None, '_vector', None),  # 481674261
     }

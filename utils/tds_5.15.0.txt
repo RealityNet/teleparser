@@ -1,5 +1,5 @@
 # Telegram version 5.15.0
-0xb8d0afdf : (None, 'account_days_t_t_l', None), # -1194283041
+0xb8d0afdf : (None, 'account_days_ttl', None), # -1194283041
 0xe7027c94 : (None, 'account_accept_authorization', None), # -419267436
 0xad2e1cd8 : (None, 'account_authorization_form', None), # -1389486888
 0x1250abde : (None, 'account_authorizations', None), # 307276766
@@ -315,7 +315,7 @@
 0xb52c939d : (None, 'contacts_top_peers_disabled', None), # -1255369827
 0xde266ef5 : (None, 'contacts_top_peers_not_modified', None), # -567906571
 0xe54100bd : (None, 'contacts_unblock', None), # -448724803
-0x7d748d04 : (None, 'data_j_s_o_n', None), # 2104790276
+0x7d748d04 : (None, 'data_json', None), # 2104790276
 0x18b7a10d : (None, 'dc_option', None), # 414687501
 0x91cc4674 : (None, 'decrypted_message', None), # -1848883596
 0xdd05ec6b : (None, 'decrypted_message_action_abort_key', None), # -586814357
@@ -385,7 +385,7 @@
 0x236df622 : (None, 'emoji_keyword_deleted', None), # 594408994
 0x5cc761bd : (None, 'emoji_keywords_difference', None), # 1556570557
 0xb3fb5361 : (None, 'emoji_language', None), # -1275374751
-0xa575739d : (None, 'emoji_u_r_l', None), # -1519029347
+0xa575739d : (None, 'emoji_url', None), # -1519029347
 0xfa56ce36 : (None, 'encrypted_chat', None), # -94974410
 0x13d6dd27 : (None, 'encrypted_chat_discarded', None), # 332848423
 0xab7ec0a0 : (None, 'encrypted_chat_empty', None), # -1417756512
@@ -462,7 +462,7 @@
 0xd0028438 : (None, 'imported_contact', None), # -805141448
 0x3c20629f : (None, 'inline_bot_switch_p_m', None), # 1008755359
 0x1d1b1245 : (None, 'input_app_event', None), # 488313413
-0x890c3d89 : (None, 'input_bot_inline_message_i_d', None), # -1995686519
+0x890c3d89 : (None, 'input_bot_inline_message_id', None), # -1995686519
 0xafeb712e : (None, 'input_channel', None), # -1343524562
 0xee8c1e86 : (None, 'input_channel_empty', None), # -292807034
 0x2a286531 : (None, 'input_channel_from_message', None), # 707290417
@@ -486,7 +486,7 @@
 0xfa4f0bb5 : (None, 'input_file_big', None), # -95482955
 0xdfdaabe1 : (None, 'input_file_location', None), # -539317279
 0xfbd2c296 : (None, 'input_folder_peer', None), # -70073706
-0x032c3e77 : (None, 'input_game_i_d', None), # 53231223
+0x032c3e77 : (None, 'input_game_id', None), # 53231223
 0xc331e80a : (None, 'input_game_short_name', None), # -1020139510
 0xf3b7acc9 : (None, 'input_geo_point', None), # -206066487
 0xe4c123d6 : (None, 'input_geo_point_empty', None), # -457104426
@@ -1045,7 +1045,7 @@
 0x69ec56a3 : (None, 'privacy_key_forwards', None), # 1777096355
 0x3d662b7b : (None, 'privacy_key_phone_call', None), # 1030105979
 0xd19ae46d : (None, 'privacy_key_phone_number', None), # -778378131
-0x39491cc8 : (None, 'privacy_key_phone_p2_p', None), # 961092808
+0x39491cc8 : (None, 'privacy_key_phone_p2p', None), # 961092808
 0x96151fed : (None, 'privacy_key_profile_photo', None), # -1777000467
 0xbc2eab30 : (None, 'privacy_key_status_timestamp', None), # -1137792208
 0x65427b82 : (None, 'privacy_value_allow_all', None), # 1698855810
@@ -1072,8 +1072,8 @@
 0x8aeabec3 : (None, 'secure_data', None), # -1964327229
 0xe0277a62 : (None, 'secure_file', None), # -534283678
 0x64199744 : (None, 'secure_file_empty', None), # 1679398724
-0xbbf2dda0 : (None, 'secure_password_kdf_algo_p_b_k_d_f2_h_m_a_c_s_h_a512iter100000', None), # -1141711456
-0x86471d92 : (None, 'secure_password_kdf_algo_s_h_a512', None), # -2042159726
+0xbbf2dda0 : (None, 'secure_password_kdf_algo_pbkdf2_hmac_sha512_iter100000', None), # -1141711456
+0x86471d92 : (None, 'secure_password_kdf_algo_sha512', None), # -2042159726
 0x004a8537 : (None, 'secure_password_kdf_algo_unknown', None), # 4883767
 0x21ec5a5f : (None, 'secure_plain_email', None), # 569137759
 0x7d6099dd : (None, 'secure_plain_phone', None), # 2103482845
@@ -1289,6 +1289,8 @@
 0xedf17c12 : (None, 'user_full', None), # -302941166
 0x745559cc : (None, 'user_full_layer101', None), # 1951750604
 0x8ea4a881 : (None, 'user_full_layer98', None), # -1901811583
+0x2e13f4c3 : (None, 'user_layer104', None), # 773059779
+0xd10d979a : (None, 'user_layer65', None), # -787638374
 0xecd75d8c : (None, 'user_profile_photo', None), # -321430132
 0x4f11bae1 : (None, 'user_profile_photo_empty', None), # 1326562017
 0xd559d8c8 : (None, 'user_profile_photo_layer97', None), # -715532088
@@ -1304,8 +1306,6 @@
 0x008c703f : (None, 'user_status_offline', None), # 9203775
 0xedb93949 : (None, 'user_status_online', None), # -306628279
 0xe26f42f1 : (None, 'user_status_recently', None), # -496024847
-0x2e13f4c3 : (None, 'user_layer104', None), # 773059779
-0xd10d979a : (None, 'user_layer65', None), # -787638374
 0x22e49072 : (None, 'user_old', None), # 585404530
 0xca30a5b1 : (None, 'users_get_full_user', None), # -902781519
 0x0d91a548 : (None, 'users_get_users', None), # 227648840
@@ -1316,10 +1316,10 @@
 0x388fa391 : (None, 'video_old2', None), # 948937617
 0xee9f4a4d : (None, 'video_old3', None), # -291550643
 0xa437c3ed : (None, 'wall_paper', None), # -1539849235
+0xf04f91ec : (None, 'wall_paper_layer94', None), # -263220756
 0x8af40b25 : (None, 'wall_paper_no_file', None), # -1963717851
 0x05086cf8 : (None, 'wall_paper_settings', None), # 84438264
 0xa12f40b8 : (None, 'wall_paper_settings_layer106', None), # -1590738760
-0xf04f91ec : (None, 'wall_paper_layer94', None), # -263220756
 0x0b57f346 : (None, 'wallet_get_key_secret_salt', None), # 190313286
 0x764386d7 : (None, 'wallet_lite_response', None), # 1984136919
 0xdd484d64 : (None, 'wallet_secret_salt', None), # -582464156
