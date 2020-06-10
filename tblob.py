@@ -4268,11 +4268,54 @@ class tblob(): # pylint: disable=C0103
             'status' / self.user_status_structures('status'),
             'inactive' / self.tbool_struct)
 
-    #SUPERTODO 0x938458c1
+    def user_struct(self):
+        return Struct(
+            'sname' / Computed('user_struct'),
+            'signature' / Hex(Const(0x938458c1, Int32ul)),
+            'flags' / FlagsEnum(Int32ul,
+                                has_access_hash=1,
+                                has_first_name=2,
+                                has_last_name=4,
+                                has_username=8,
+                                has_phone=16,
+                                has_profile_photo=32,
+                                has_status=64,
+                                is_self=1024,
+                                is_contact=2048,
+                                is_mutual_contact=4096,
+                                is_deleted=8192,
+                                is_bot=16384,
+                                is_bot_chat_history=32768,
+                                is_bot_no_chats=65536,
+                                is_min=1048576,
+                                is_verified=131072,
+                                is_bot_inline_geo=2097152,
+                                is_restricted=262144,
+                                is_support=8388608),
+            'id' / Int32ul,
+            'access_hash' / If(this.flags.has_access_hash, Int64ul),
+            'first_name' / If(this.flags.has_first_name, self.tstring_struct),
+            'last_name' / If(this.flags.has_last_name, self.tstring_struct),
+            'username' / If(this.flags.has_username, self.tstring_struct),
+            'phone' / If(this.flags.has_phone, self.tstring_struct),
+            'photo' / If(this.flags.has_profile_photo,
+                         self.user_profile_photo_structures('photo')),
+            'status' / If(this.flags.has_status,
+                          self.user_status_structures('status')),
+            'bot_info_version' / If(this.flags.is_bot, Int32ul),
+            'restrictions' / If(this.flags.is_restricted, Struct(
+                '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
+                'restrictions_num' / Int32ul,
+                'restrictions_array' / Array(
+                    this.restrictions_num,
+                    # TODO restrictions? 0xd072acb4
+                    self.restriction_struct()))))
+
 
     def user_structures(self, name):
         # pylint: disable=C0301
         tag_map = {
+            0x938458c1: LazyBound(lambda: self.user_struct()),
             0x2e13f4c3: LazyBound(lambda: self.user_layer104_struct()),
             0xb29ad7cc: LazyBound(lambda: self.user_deleted_old_struct()),
             0xcab35e18: LazyBound(lambda: self.user_contact_old2_struct()),
@@ -6206,7 +6249,7 @@ class tblob(): # pylint: disable=C0103
         0x8f8c0e4e: (None, 'url_auth_result_accepted', None), # -1886646706
         0xa9d6db1f: (None, 'url_auth_result_default', None), # -1445536993
         0x92d33a0e: (None, 'url_auth_result_request', None), # -1831650802
-        0x938458c1: (TODO, 'user', None), # -1820043071
+        0x938458c1: (user_struct, 'user', None), # -1820043071
         0xf2fb8319: (user_contact_old_struct, 'user_contact_old', None),  # -218397927
         0xcab35e18: (user_contact_old2_struct, 'user_contact_old2', None),  # -894214632
         0xb29ad7cc: (user_deleted_old_struct, 'user_deleted_old', None),  # -1298475060
