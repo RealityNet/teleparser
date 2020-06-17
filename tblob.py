@@ -265,8 +265,8 @@ class tblob(): # pylint: disable=C0103
         tag_map = {
             0xb7b31ea8: LazyBound(lambda: self.base_theme_night_struct()),
             0xc3a12462: LazyBound(lambda: self.base_theme_classic_struct()),
-            0xfbd81688: LazyBound(lambda: self.base_theme_day_struct(),
-            0x5b11125a: LazyBound(lambda: self.base_theme_arctic_struct(),
+            0xfbd81688: LazyBound(lambda: self.base_theme_day_struct()),
+            0x5b11125a: LazyBound(lambda: self.base_theme_arctic_struct()),
             0x6d5f77ee: LazyBound(lambda: self.base_theme_tinted_struct())
         }
         return 'base_theme_structures' / Struct(
@@ -656,7 +656,7 @@ class tblob(): # pylint: disable=C0103
                 'restrict_reasons_num' / Int32ul,
                 'restrict_reasons_array' / Array(
                     this.restrict_reasons_num,
-                    self.restrict_reason_struct()))),
+                    self.restriction_reason_struct()))),
             'admin_rights' / If(this.flags.has_admin_rights,
                                 self.chat_admin_rights_struct()),
             'banned_rights' / If(this.flags.has_banned_rights,
@@ -1464,6 +1464,10 @@ class tblob(): # pylint: disable=C0103
 
     #--------------------------------------------------------------------------
 
+    def input_sticker_set_animated_emoji_struct(self):
+        return Struct(
+            'sname' / Computed('input_sticker_set_animated_emoji'))
+
     def input_sticker_set_empty_struct(self):
         return Struct(
             'sname' / Computed('input_sticker_set_empty'),
@@ -1485,6 +1489,7 @@ class tblob(): # pylint: disable=C0103
     def input_sticker_set_structures(self, name):
         # pylint: disable=C0301
         tag_map = {
+            0x028703c8: LazyBound(lambda: self.input_sticker_set_animated_emoji_struct()),
             0x861cc8a0: LazyBound(lambda: self.input_sticker_set_short_name_struct()),
             0x9de7a269: LazyBound(lambda: self.input_sticker_set_id_struct()),
             0xffb62b95: LazyBound(lambda: self.input_sticker_set_empty_struct())
@@ -1930,9 +1935,23 @@ class tblob(): # pylint: disable=C0103
                       'length' / Int32ul,
                       'url' / self.tstring_struct)
 
+    def message_entity_strike_struct(self):
+        return Struct('sname' / Computed('message_entity_strike'),
+                      'signature' / Hex(Const(0xbf0693d4, Int32ul)),
+                      'offset' / Int32ul,
+                      'length' / Int32ul)
+
+    def message_entity_underline_struct(self):
+        return Struct('sname' / Computed('message_entity_underline'),
+                      'signature' / Hex(Const(0x9c4e7e8b, Int32ul)),
+                      'offset' / Int32ul,
+                      'length' / Int32ul)
+
     def message_entity_structures(self, name):
         # pylint: disable=C0301
         tag_map = {
+            0x9c4e7e8b: LazyBound(lambda: self.message_entity_underline_struct()),
+            0xbf0693d4: LazyBound(lambda: self.message_entity_strike_struct()),
             0x761e6af4: LazyBound(lambda: self.message_entity_bank_card_struct()),
             0x020df5d0: LazyBound(lambda: self.message_entity_blockquote_struct()),
             0x826f8b60: LazyBound(lambda: self.message_entity_italic_struct()),
@@ -2043,6 +2062,20 @@ class tblob(): # pylint: disable=C0103
         return 'message_fwd_header_structures' / Struct(
             '_signature' / Peek(Int32ul),
             name / Switch(this._signature, tag_map))
+
+    #--------------------------------------------------------------------------
+
+    def message_reactions_struct(self):
+        return Struct(
+            'sname' / Computed('message_reactions'),
+            'signature' / Hex(Const(0xb87a24d1, Int32ul)),
+            'flags' / FlagsEnum(Int32ul,
+                                min=1),
+            '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
+            'reaction_count_num' / Int32ul,
+            'reaction_count_array' / Array(
+                this.reaction_count_num,
+                self.reaction_count_struct()))
 
     #--------------------------------------------------------------------------
 
@@ -2275,6 +2308,21 @@ class tblob(): # pylint: disable=C0103
             name / Switch(this._signature, tag_map))
 
     #--------------------------------------------------------------------------
+
+    def message_forwarded_old_struct(self):
+        return Struct(
+            'sname' / Computed('message_forwarded_old'),
+            'signature' / Hex(Const(0x05f46804, Int32ul)),
+            'id' / Int32ul,
+            'fwd_from_id' / Int32ul,
+            'fwd_from_date' / self.ttimestamp_struct,
+            'from_id' / Int32ul,
+            'to_id' / self.peer_structures('to_id'),
+            'out' / self.tbool_struct,
+            'unread' / self.tbool_struct,
+            'date' / self.ttimestamp_struct,
+            'message' / self.tstring_struct,
+            'media' / self.message_media_structures('media'))
 
     def message_forwarded_old2_struct(self):
         return Struct(
@@ -2628,6 +2676,121 @@ class tblob(): # pylint: disable=C0103
             'grouped_id' / If(this.flags.is_grouped_id, Int64ul),
             'UNPARSED' / GreedyBytes)
 
+    def message_layer104_2_struct(self):
+        return Struct(
+            'sname' / Computed('message_layer104_2'),
+            'signature' / Hex(Const(0x1c9b1027, Int32ul)),
+            'flags' / FlagsEnum(Int32ul,
+                                out=2,
+                                forwarded=4,
+                                reply_to_msg_id=8,
+                                mentioned=16,
+                                media_unread=32,
+                                reply_markup=64,
+                                entities=128,
+                                media=512,
+                                views=1024,
+                                via_bot=2048,
+                                silent=8192,
+                                post=16384,
+                                edited=32768,
+                                author=65536,
+                                grouped_id=131072,
+                                from_scheduled=262144,
+                                legacy=524288,
+                                reactions=1048576,
+                                edit_hide=2097152,
+                                restricted=4194304),
+            'id' / Int32ul,
+            'from_id' / If(this.flags.from_id, Int32ul),
+            'to_id' / self.peer_structures('to_id'),
+            'fwd_from' / If(this.flags.forwarded,
+                            self.message_fwd_header_structures('fwd_from')),
+            'via_bot_id' / If(this.flags.via_bot, Int32ul),
+            'reply_to_msg_id' / If(this.flags.reply_to_msg_id, Int32ul),
+            'date' / self.ttimestamp_struct,
+            'message' / self.tstring_struct,
+            'media' / If(this.flags.media,
+                         self.message_media_structures('media')),
+            '_media_ttl' / Computed('ignored'),
+            '_media_caption_legacy' / Computed('ignored'),
+            'reply_markup' / If(this.flags.reply_markup,
+                                self.reply_markup_structures('reply_markup')),
+            'entities' / If(this.flags.entities, Struct(
+                '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
+                'message_entity_num' / Int32ul,
+                'message_entity_array' / Array(
+                    this.message_entity_num,
+                    self.message_entity_structures('message_entity')))),
+            'views' / If(this.flags.views, Int32ul),
+            'edit_timestamp' / If(this.flags.is_edited, self.ttimestamp_struct),
+            'post_author' / If(this.flags.author, self.tstring_struct),
+            'grouped_id' / If(this.flags.grouped_id, Int64ul),
+            'reactions' / If(this.flags.reactions,
+                             self.message_reactions_struct()),
+            'restricted' / If(this.flags.restricted, self.tstring_struct),
+            'UNPARSED' / GreedyBytes)
+
+    def message_layer104_3_struct(self):
+        return Struct(
+            'sname' / Computed('message_layer104_3'),
+            'signature' / Hex(Const(0x9789dac4, Int32ul)),
+            'flags' / FlagsEnum(Int32ul,
+                                out=2,
+                                forwarded=4,
+                                reply_to_msg_id=8,
+                                mentioned=16,
+                                media_unread=32,
+                                reply_markup=64,
+                                entities=128,
+                                media=512,
+                                views=1024,
+                                via_bot=2048,
+                                silent=8192,
+                                post=16384,
+                                edited=32768,
+                                author=65536,
+                                grouped_id=131072,
+                                from_scheduled=262144,
+                                legacy=524288,
+                                reactions=1048576,
+                                edit_hide=2097152,
+                                restricted=4194304),
+            'id' / Int32ul,
+            'from_id' / If(this.flags.from_id, Int32ul),
+            'to_id' / self.peer_structures('to_id'),
+            'fwd_from' / If(this.flags.forwarded,
+                            self.message_fwd_header_structures('fwd_from')),
+            'via_bot_id' / If(this.flags.via_bot, Int32ul),
+            'reply_to_msg_id' / If(this.flags.reply_to_msg_id, Int32ul),
+            'date' / self.ttimestamp_struct,
+            'message' / self.tstring_struct,
+            'media' / If(this.flags.media,
+                         self.message_media_structures('media')),
+            '_media_ttl' / Computed('ignored'),
+            '_media_caption_legacy' / Computed('ignored'),
+            'reply_markup' / If(this.flags.reply_markup,
+                                self.reply_markup_structures('reply_markup')),
+            'entities' / If(this.flags.entities, Struct(
+                '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
+                'message_entity_num' / Int32ul,
+                'message_entity_array' / Array(
+                    this.message_entity_num,
+                    self.message_entity_structures('message_entity')))),
+            'views' / If(this.flags.views, Int32ul),
+            'edit_timestamp' / If(this.flags.is_edited, self.ttimestamp_struct),
+            'post_author' / If(this.flags.author, self.tstring_struct),
+            'grouped_id' / If(this.flags.grouped_id, Int64ul),
+            'reactions' / If(this.flags.reactions,
+                             self.message_reactions_struct()),
+            'restricted' / If(this.flags.restricted, Struct(
+                '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
+                'restricted_reasons_num' / Int32ul,
+                'restricted_reasons_array' / Array(
+                    this.restricted_reasons_num,
+                    self.restriction_reason_struct()))),
+            'UNPARSED' / GreedyBytes)
+
     def message_struct(self):
         return Struct(
             'sname' / Computed('message_struct'),
@@ -2692,10 +2855,13 @@ class tblob(): # pylint: disable=C0103
         tag_map = {
             0x452c0e65: LazyBound(lambda: self.message_struct()),
             0x44f9b43d: LazyBound(lambda: self.message_layer104_struct()),
+            0x1c9b1027: LazyBound(lambda: self.message_layer104_2_struct()),
+            0x9789dac4: LazyBound(lambda: self.message_layer104_3_struct()),
             0x83e5de54: LazyBound(lambda: self.message_empty_struct()),
             0x90dddc11: LazyBound(lambda: self.message_layer72_struct()),
             0x9e19a1f6: LazyBound(lambda: self.message_service_struct()),
             0x9f8d60bb: LazyBound(lambda: self.message_service_old_struct()),
+            0x05f46804: LazyBound(lambda: self.message_forwarded_old_struct()),
             0xa367e716: LazyBound(lambda: self.message_forwarded_old2_struct()),
             0xc06b9607: LazyBound(lambda: self.message_service_layer48_struct()),
             0xc09be45f: LazyBound(lambda: self.message_layer68_struct()),
@@ -2712,7 +2878,6 @@ class tblob(): # pylint: disable=C0103
     TODO not yet implemented
 
     case -260565816: result = new TL_message_old5();
-    case 99903492: result = new TL_messageForwarded_old();
     case 495384334: result = new TL_messageService_old2();
     case 585853626: result = new TL_message_old();
     case 736885382: result = new TL_message_old6();
@@ -3435,6 +3600,20 @@ class tblob(): # pylint: disable=C0103
 
     #--------------------------------------------------------------------------
 
+    def peer_settings_struct(self):
+        return Struct(
+            'sname' / Computed('peer_settings'),
+            'signature' / Hex(Const(0x818426cd, Int32ul)),
+            'flags' / FlagsEnum(Int32ul,
+                                report_spam=1,
+                                add_contact=2,
+                                block_contact=4,
+                                share_contact=8,
+                                need_contacts_exception=16,
+                                report_geo=32))
+
+    #--------------------------------------------------------------------------
+
     def phone_call_discard_reason_missed_struct(self):
         return Struct('sname' / Computed('phone_call_discard_reason_missed'),
                       'signature' / Hex(Const(0x85e42301, Int32ul)))
@@ -3678,7 +3857,7 @@ class tblob(): # pylint: disable=C0103
 
     #--------------------------------------------------------------------------
 
-   def poll_results_layer108_struct(self):
+    def poll_results_layer108_struct(self):
         return Struct(
             'sname' / Computed('poll_results_layer108'),
             'signature' / Hex(Const(0x5755785a, Int32ul)),
@@ -3696,7 +3875,7 @@ class tblob(): # pylint: disable=C0103
                         self.poll_answer_voters_struct()))),
             'total_voters' / If(this.flags.has_total, Int32ul))
 
-   def poll_results_struct(self):
+    def poll_results_struct(self):
         return Struct(
             'sname' / Computed('poll_results'),
             'signature' / Hex(Const(0xc87024a2, Int32ul)),
@@ -3731,6 +3910,17 @@ class tblob(): # pylint: disable=C0103
         return 'poll_results_structures' / Struct(
             '_signature' / Peek(Int32ul),
             name / Switch(this._signature, tag_map))
+
+    #--------------------------------------------------------------------------
+
+    def reaction_count_struct(self):
+        return Struct(
+            'sname' / Computed('reaction_count'),
+            'signature' / Hex(Const(0x6fb250d1, Int32ul)),
+            'flags' / FlagsEnum(Int32ul,
+                                chosen=1),
+            'reaction' / self.tstring_struct,
+            'count' / Int32ul)
 
     #--------------------------------------------------------------------------
 
@@ -4189,7 +4379,44 @@ class tblob(): # pylint: disable=C0103
             'common_chats_count' / Int32ul,
             'folder_id' / If(this.flags.has_folder_id, Int32ul))
 
-    #TODO ADD structures for user_full, add 0xedf17c12
+    def user_full_struct(self):
+        return Struct(
+            'sname' / Computed('user_full'),
+            'signature' / Hex(Const(0xedf17c12, Int32ul)),
+            'flags' / FlagsEnum(Int32ul,
+                                is_blocked=1,
+                                has_about=2,
+                                has_profile_photo=4,
+                                has_bot_info=8,
+                                phone_calls_available=16,
+                                phone_calls_private=32,
+                                has_pinned_msg_id=64,
+                                can_pin_message=128,
+                                has_folder_id=2048,
+                                has_scheduled=4096),
+            'user' / self.user_structures('user'),
+            'about' / If(this.flags.has_about, self.tstring_struct),
+            'settings' / self.peer_settings_struct(),
+            'profile_photo' / If(this.flags.has_profile_photo,
+                                 self.photo_structures('profile_photo')),
+            'notify_settings' / self.peer_notify_settings_structures(
+                'notify_settings'),
+            'bot_info' / If(this.flags.has_bot_info,
+                            self.bot_info_structures('bot_info')),
+            'pinned_msg_id' / If(this.flags.has_pinned_msg_id, Int32ul),
+            'common_chats_count' / Int32ul,
+            'folder_id' / If(this.flags.has_folder_id, Int32ul))
+
+    def user_full_structures(self, name):
+        # pylint: disable=C0301
+        tag_map = {
+            0x745559cc: LazyBound(lambda: self.user_full_layer101_struct()),
+            0x8ea4a881: LazyBound(lambda: self.user_full_layer98_struct()),
+            0xedf17c12: LazyBound(lambda: self.user_full_struct())
+        }
+        return 'user_full_structures' / Struct(
+            '_signature' / Peek(Int32ul),
+            name / Switch(this._signature, tag_map))
 
     #--------------------------------------------------------------------------
 
@@ -4482,7 +4709,7 @@ class tblob(): # pylint: disable=C0103
                 'restrictions_num' / Int32ul,
                 'restrictions_array' / Array(
                     this.restrictions_num,
-                    self.restriction_struct()))))
+                    self.restriction_reason_struct()))))
 
 
     def user_structures(self, name):
@@ -4752,7 +4979,8 @@ class tblob(): # pylint: disable=C0103
                                 is_default=2,
                                 has_wallpaper_settings=4,
                                 is_dark=16),
-            'wallpaper_settings' / If(this.flags.has_wallpaper_settings,
+            'wallpaper_settings' / If(
+                this.flags.has_wallpaper_settings,
                 self.wall_paper_settings_structures('wall_paper_settings')))
 
     def wall_paper_layer94_struct(self):
@@ -4773,15 +5001,16 @@ class tblob(): # pylint: disable=C0103
             'signature' / Hex(Const(0xa437c3ed, Int32ul)),
             'id' / Int64ul,
             'flags' / FlagsEnum(Int32ul,
-                                is_creator=1,
-                                is_default=2,
-                                has_wallpaper_settings=4,
-                                is_pattern=8,
-                                is_dark=16),
+                                creator=1,
+                                default=2,
+                                wallpaper_settings=4,
+                                pattern=8,
+                                dark=16),
             'access_hash' / Int64ul,
             'slug' / self.tstring_struct,
             'document' / self.document_structures('document'),
-            'wallpaper_settings' / If(this.flags.has_wallpaper_settings,
+            'wallpaper_settings' / If(
+                this.flags.wallpaper_settings,
                 self.wall_paper_settings_structures('wall_paper_settings')))
 
     def wall_paper_structures(self, name):
@@ -4990,48 +5219,49 @@ class tblob(): # pylint: disable=C0103
             'cached_page' / If(this.flags.is_cached,
                                self.page_structures('cached_page')))
 
-   def web_page_layer107_struct(self):
+    def web_page_layer107_struct(self):
         return Struct(
             'sname' / Computed('web_page_layer107'),
             'signature' / Hex(Const(0xfa64e172, Int32ul)),
             'flags' / FlagsEnum(Int32ul,
-                                has_type=1,
-                                has_site_name=2,
-                                has_title=4,
-                                has_description=8,
-                                has_photo=16,
-                                has_embed_url=32,
-                                has_embed_media=64,
-                                has_duration=128,
-                                has_author=256,
-                                has_document=512,
-                                is_cached=1024,
+                                type=1,
+                                site_name=2,
+                                title=4,
+                                description=8,
+                                photo=16,
+                                embed_url=32,
+                                embed_media=64,
+                                duration=128,
+                                author=256,
+                                document=512,
+                                cached=1024,
                                 has_webpage_attr_theme=2048),
             'id' / Int64ul,
             'url' / self.tstring_struct,
             'display_url' / self.tstring_struct,
             'hash' / Int32ul,
-            'type' / If(this.flags.has_type, self.tstring_struct),
-            'site_name' / If(this.flags.has_site_name, self.tstring_struct),
-            'title' / If(this.flags.has_title, self.tstring_struct),
-            'description' / If(this.flags.has_description, self.tstring_struct),
-            'photo' / If(this.flags.has_photo, self.photo_structures('photo')),
-            'embed_url' / If(this.flags.has_embed_url, self.tstring_struct),
-            'embed_type' / If(this.flags.has_embed_url, self.tstring_struct),
-            'embed_width' / If(this.flags.has_embed_media, Int32ul),
-            'embed_height' / If(this.flags.has_embed_media, Int32ul),
-            'duration' / If(this.flags.has_duration, Int32ul),
-            'author' / If(this.flags.has_author, self.tstring_struct),
-            'document' / If(this.flags.has_document,
+            'type' / If(this.flags.type, self.tstring_struct),
+            'site_name' / If(this.flags.site_name, self.tstring_struct),
+            'title' / If(this.flags.title, self.tstring_struct),
+            'description' / If(this.flags.description, self.tstring_struct),
+            'photo' / If(this.flags.photo, self.photo_structures('photo')),
+            'embed_url' / If(this.flags.embed_url, self.tstring_struct),
+            'embed_type' / If(this.flags.embed_url, self.tstring_struct),
+            'embed_width' / If(this.flags.embed_media, Int32ul),
+            'embed_height' / If(this.flags.embed_media, Int32ul),
+            'duration' / If(this.flags.duration, Int32ul),
+            'author' / If(this.flags.author, self.tstring_struct),
+            'document' / If(this.flags.document,
                             self.document_structures('document')),
-            'webpage_attribute_theme' / If(this.flags.has_webpage_attr_theme,
-                                           Struct(
-                '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
-                'documents_num' / Int32ul,
-                'documents_array' / Array(
-                    this.documents_num,
-                    self.document_structures('document')))),
-            'cached_page' / If(this.flags.is_cached,
+            'webpage_attribute_theme' / If(
+                this.flags.has_webpage_attr_theme,
+                Struct(
+                    '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
+                    'documents_num' / Int32ul,
+                    'documents_array' / Array(
+                        this.documents_num,
+                        self.document_structures('document')))),
+            'cached_page' / If(this.flags.cached,
                                self.page_structures('cached_page')))
 
     def web_page_struct(self):
@@ -5039,46 +5269,45 @@ class tblob(): # pylint: disable=C0103
             'sname' / Computed('web_page'),
             'signature' / Hex(Const(0xe89c45b2, Int32ul)),
             'flags' / FlagsEnum(Int32ul,
-                                has_type=1,
-                                has_site_name=2,
-                                has_title=4,
-                                has_description=8,
-                                has_photo=16,
-                                has_embed_url=32,
-                                has_embed_media=64,
-                                has_duration=128,
-                                has_author=256,
-                                has_document=512,
-                                is_cached=1024,
-                                has_webpage_attr_theme=4096),
+                                type=1,
+                                site_name=2,
+                                title=4,
+                                description=8,
+                                photo=16,
+                                embed_url=32,
+                                embed_media=64,
+                                duration=128,
+                                author=256,
+                                document=512,
+                                cached=1024,
+                                webpage_attr_theme=4096),
             'id' / Int64ul,
             'url' / self.tstring_struct,
             'display_url' / self.tstring_struct,
             'hash' / Int32ul,
-            'type' / If(this.flags.has_type, self.tstring_struct),
-            'site_name' / If(this.flags.has_site_name, self.tstring_struct),
-            'title' / If(this.flags.has_title, self.tstring_struct),
-            'description' / If(this.flags.has_description, self.tstring_struct),
-            'photo' / If(this.flags.has_photo, self.photo_structures('photo')),
-            'embed_url' / If(this.flags.has_embed_url, self.tstring_struct),
-            'embed_type' / If(this.flags.has_embed_url, self.tstring_struct),
-            'embed_width' / If(this.flags.has_embed_media, Int32ul),
-            'embed_height' / If(this.flags.has_embed_media, Int32ul),
-            'duration' / If(this.flags.has_duration, Int32ul),
-            'author' / If(this.flags.has_author, self.tstring_struct),
-            'document' / If(this.flags.has_document,
+            'type' / If(this.flags.type, self.tstring_struct),
+            'site_name' / If(this.flags.site_name, self.tstring_struct),
+            'title' / If(this.flags.title, self.tstring_struct),
+            'description' / If(this.flags.description, self.tstring_struct),
+            'photo' / If(this.flags.photo, self.photo_structures('photo')),
+            'embed_url' / If(this.flags.embed_url, self.tstring_struct),
+            'embed_type' / If(this.flags.embed_url, self.tstring_struct),
+            'embed_width' / If(this.flags.embed_media, Int32ul),
+            'embed_height' / If(this.flags.embed_media, Int32ul),
+            'duration' / If(this.flags.duration, Int32ul),
+            'author' / If(this.flags.author, self.tstring_struct),
+            'document' / If(this.flags.document,
                             self.document_structures('document')),
-            'cached_page' / If(this.flags.is_cached,
+            'cached_page' / If(this.flags.cached,
                                self.page_structures('cached_page')),
-            'webpage_attribute_theme' / If(this.flags.has_webpage_attr_theme,
-                                           Struct(
-                '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
-                'webpage_attribute_num' / Int32ul,
-                'webpage_attribute_array' / Array(
-                    this.webpage_attribute_num,
-                    self.web_page_attribute_theme_struct()))))
-
-    #SUPERTODO  layer107
+            'webpage_attribute_theme' / If(
+                this.flags.webpage_attr_theme,
+                Struct(
+                    '_vector_sig' / Hex(Const(0x1cb5c415, Int32ul)),
+                    'webpage_attribute_num' / Int32ul,
+                    'webpage_attribute_array' / Array(
+                        this.webpage_attribute_num,
+                        self.web_page_attribute_theme_struct()))))
 
     def web_page_structures(self, name):
         # pylint: disable=C0301
@@ -5803,7 +6032,7 @@ class tblob(): # pylint: disable=C0103
         0x3334b0f0: (None, 'input_secure_file_uploaded', None),  # 859091184
         0xdb21d0a7: (None, 'input_secure_value', None),  # -618540889
         0x1cc6e91f: (None, 'input_single_media', None),  # 482797855
-        0x028703c8: (TODO, 'input_sticker_set_animated_emoji', None), # 42402760
+        0x028703c8: (input_sticker_set_animated_emoji_struct, 'input_sticker_set_animated_emoji', None), # 42402760
         0xffb62b95: (input_sticker_set_empty_struct, 'input_sticker_set_empty', None),  # -4838507
         0x9de7a269: (input_sticker_set_id_struct, 'input_sticker_set_id', None),  # -1645763991
         0x861cc8a0: (input_sticker_set_short_name_struct, 'input_sticker_set_short_name', None),  # -2044933984
@@ -5907,12 +6136,12 @@ class tblob(): # pylint: disable=C0103
         0x352dca58: (message_entity_mention_name_struct, 'message_entity_mention_name', None),  # 892193368
         0x9b69e34b: (message_entity_phone_struct, 'message_entity_phone', None),  # -1687559349
         0x73924be0: (message_entity_pre_struct, 'message_entity_pre', None),  # 1938967520
-        0xbf0693d4: (TODO, 'message_entity_strike', None), # -1090087980
+        0xbf0693d4: (message_entity_strike_struct, 'message_entity_strike', None), # -1090087980
         0x76a6d327: (message_entity_text_url_struct, 'message_entity_text_url', None),  # 1990644519
-        0x9c4e7e8b: (TODO, 'message_entity_underline', None), # -1672577397
+        0x9c4e7e8b: (message_entity_underline_struct, 'message_entity_underline', None), # -1672577397
         0xbb92ba95: (message_entity_unknown_struct, 'message_entity_unknown', None),  # -1148011883
         0x6ed02538: (message_entity_url_struct, 'message_entity_url', None),  # 1859134776
-        0x05f46804: (None, 'message_forwarded_old', None),  # 99903492
+        0x05f46804: (message_forwarded_old_struct, 'message_forwarded_old', None),  # 99903492
         0xa367e716: (message_forwarded_old2_struct, 'message_forwarded_old2', None),  # -1553471722
         0xec338270: (message_fwd_header_struct, 'message_fwd_header', None),  # -332168592
         0xc786ddcb: (message_fwd_header_layer68_struct, 'message_fwd_header_layer68', None),  # -947462709
@@ -5943,7 +6172,7 @@ class tblob(): # pylint: disable=C0103
         0xa2d24290: (message_media_video_old_struct, 'message_media_video_old', None),  # -1563278704
         0xa32dd600: (message_media_web_page_struct, 'message_media_web_page', None),  # -1557277184
         0x0ae30253: (None, 'message_range', None),  # 182649427
-        0xb87a24d1: (None, 'message_reactions', None), # -1199954735
+        0xb87a24d1: (message_reactions_struct, 'message_reactions', None), # -1199954735
         0xe3ae6108: (None, 'message_reactions_list', None), # -475111160
         0x9e19a1f6: (message_service_struct, 'message_service', None),  # -1642487306
         0xc06b9607: (message_service_layer48_struct, 'message_service_layer48', None),  # -1066691065
@@ -5954,8 +6183,8 @@ class tblob(): # pylint: disable=C0103
         0x36377430: (None, 'message_user_vote_input_option', None), # 909603888
         0x0e8fe0de: (None, 'message_user_vote_multiple', None), # 244310238
         0x44f9b43d: (message_layer104_struct, 'message_layer104', None),  # 1157215293
-        0x1c9b1027: (TODO, 'message_layer104_2', None), # 479924263
-        0x9789dac4: (TODO, 'message_layer104_3', None), # -1752573244
+        0x1c9b1027: (message_layer104_2_struct, 'message_layer104_2', None), # 479924263
+        0x9789dac4: (message_layer104_3_struct, 'message_layer104_3', None), # -1752573244
         0xc992e15c: (None, 'message_layer47', None),  # -913120932
         0xc09be45f: (message_layer68_struct, 'message_layer68', None),  # -1063525281
         0x90dddc11: (message_layer72_struct, 'message_layer72', None),  # -1864508399
@@ -6268,15 +6497,15 @@ class tblob(): # pylint: disable=C0103
         0xd1451883: (None, 'payments_validated_requested_info', None),  # -784000893
         0xbddde532: (peer_channel_struct, 'peer_channel', None),  # -1109531342
         0xbad0e5bb: (peer_chat_struct, 'peer_chat', None),  # -1160714821
-        0xca461b5d: (TODO_MAYBE, 'peer_located', None), # -901375139
+        0xca461b5d: (None, 'peer_located', None), # -901375139
         0x6d1ded88: (None, 'peer_notify_events_all_v_0_1_317'),  # 1830677896
         0xadd53cb3: (None, 'peer_notify_events_empty_v_0_1_317'),  # -1378534221
         0xaf509d20: (peer_notify_settings_struct, 'peer_notify_settings', None),  # -1353671392
         0x70a68512: (peer_notify_settings_empty_layer77_struct, 'peer_notify_settings_empty_layer77', None),  # 1889961234
         0x8d5e11ee: (peer_notify_settings_layer47_struct, 'peer_notify_settings_layer47', None),  # -1923214866
         0x9acda4c0: (peer_notify_settings_layer77_struct, 'peer_notify_settings_layer77', None),  # -1697798976
-        0xf8ec284b: (TODO_MAYBE, 'peer_self_located', None), # -118740917
-        0x818426cd: (None, 'peer_settings', None),  # -2122045747
+        0xf8ec284b: (None, 'peer_self_located', None), # -118740917
+        0x818426cd: (peer_settings_struct, 'peer_settings', None),  # -2122045747
         0x9db1bc6d: (peer_user_struct, 'peer_user', None),  # -1649296275
         0x8742ae7f: (None, 'phone_call', None),  # -2025673089
         0xe6f9ddf3: (None, 'phone_call_v_5_5_0', None),  # -419832333
@@ -6364,7 +6593,7 @@ class tblob(): # pylint: disable=C0103
         0xf888fa1a: (None, 'privacy_value_disallow_contacts', None),  # -125240806
         0x0c7f49b7: (None, 'privacy_value_disallow_users', None),  # 209668535
         0x5bb8e511: (None, 'proto_message_v_0_1_317'),  # 1538843921
-        0x6fb250d1: (None, 'reaction_count', None), # 1873957073
+        0x6fb250d1: (reaction_count_struct, 'reaction_count', None), # 1873957073
         0xa384b779: (None, 'received_notify_message', None),  # -1551583367
         0xa01b22f9: (None, 'recent_me_url_chat', None),  # -1608834311
         0xeb49081d: (None, 'recent_me_url_chat_invite', None),  # -347535331
@@ -6631,7 +6860,7 @@ class tblob(): # pylint: disable=C0103
         0x200250ba: (user_empty_struct, 'user_empty', None),  # 537022650
         0x5214c89d: (user_foreign_old_struct, 'user_foreign_old', None),  # 1377093789
         0x075cf7a8: (user_foreign_old2_struct, 'user_foreign_old2', None),  # 123533224
-        0xedf17c12: (TODO, 'user_full', None), # -302941166
+        0xedf17c12: (user_full_struct, 'user_full', None), # -302941166
         0x745559cc: (user_full_layer101_struct, 'user_full_layer101', None),  # 1951750604
         0x8ea4a881: (user_full_layer98_struct, 'user_full_layer98', None),  # -1901811583
         0x771095da: (None, 'user_full_v_0_1_317'),  # 1997575642
