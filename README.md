@@ -13,6 +13,8 @@ It's assumed a bit of knowledge on how the cache4.db is organized and the specif
 * **5.5.0**: tested, expected to work
 * **><**: could work
 * **5.6.2**: tested, expected to work
+* **><**: could work
+* **5.15.0**: tested, expected to work
 * **>**: expected to fail
 
 ## Usage
