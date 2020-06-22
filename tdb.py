@@ -264,8 +264,8 @@ class tdb():
 
             # The difference should be less than 5 seconds.
             date_from_blob = message.message_date_from_blob
-            if date_from_blob != entry['date']:
-                if date_from_blob > message.message_date_from_blob:
+            if date_from_blob and date_from_blob != entry['date']:
+                if message.date and date_from_blob > message.date:
                     assert (date_from_blob - message.message_date_from_blob) < 5
                 else:
                     assert (message.message_date_from_blob - date_from_blob) < 5
