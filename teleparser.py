@@ -5,6 +5,7 @@
 # Part of the project: tblob.py tdb.py logger.py
 #
 # Version History
+# - 20200622: fixed wrong object 0x83e5de54 (message_empty_struct)
 # - 20200617: added support for 5.15.0
 # - 20200418: change eol terminators, added requirements file
 # - 20200407: [tblob] fixed a bug, [tdb] added a couple of checks base on
@@ -47,7 +48,7 @@ import logger
 import tblob
 import tdb
 
-VERSION = '20200617'
+VERSION = '20200622'
 
 #------------------------------------------------------------------------------
 

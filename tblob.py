@@ -1979,6 +1979,7 @@ class tblob(): # pylint: disable=C0103
     def message_empty_struct(self):
         return Struct('sname' / Computed('message_empty'),
                       'signature' / Hex(Const(0x83e5de54, Int32ul)),
+                      'id' / Int32ul,
                       'to_id' / self.peer_user_struct())
 
     #--------------------------------------------------------------------------
