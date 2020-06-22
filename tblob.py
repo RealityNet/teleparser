@@ -1980,7 +1980,11 @@ class tblob(): # pylint: disable=C0103
         return Struct('sname' / Computed('message_empty'),
                       'signature' / Hex(Const(0x83e5de54, Int32ul)),
                       'id' / Int32ul,
-                      'to_id' / self.peer_user_struct())
+                      # It seems empty messages without 'to_id' exists.
+                      '_extra_signature' / Peek(Int32ul),
+                      'to_id' / IfThenElse(this._extra_signature,
+                                           self.peer_structures('to_id'),
+                                           Terminated))
 
     #--------------------------------------------------------------------------
 
