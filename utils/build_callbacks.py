@@ -14,6 +14,7 @@ with open(sys.argv[1], 'r') as jclass:
             res = re.search('class ([^ ]+) ', prev_line)
             if res:
                 fn = res.group(1)
+                fn = fn.replace('TLRPC$','',1)
                 fn = fn.replace('TL_', '', 1)
                 fn = re.sub(r'([A-Z])', r'_\1', fn).lower()
                 print('0x{:08x} : (None, \'{}\', None), # {}'.format(
