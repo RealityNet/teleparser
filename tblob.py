@@ -2943,7 +2943,7 @@ class tblob(): # pylint: disable=C0103
     def page_block_subtitle_struct(self):
         return Struct(
             'sname' / Computed('page_block_subtitle'),
-            'signature' / Hex(Const(0x804361ea, Int32ul)),
+            'signature' / Hex(Const(0x8ffa9a1f, Int32ul)),
             'text' / self.rich_text_structures('text'))
 
     def page_block_ordered_list_struct(self):
