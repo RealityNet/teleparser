@@ -307,7 +307,10 @@ class tdb():
             assert uid not in self._table_sent_files
             logger.info('parsing sent_files_v2, entry uid: %s', uid)
             blob = self._blob_parser.parse_blob(entry['data'])
-            sentfile = tsentfile(uid, entry['type'], entry['parent'], blob)
+            # Some old telegram versions have not 'type' / 'parent'.
+            entry_type = getattr(entry, 'type', None)
+            entry_parent = getattr(entry, 'parent', None)
+            sentfile = tsentfile(uid, entry_type, entry_parent, blob)
             self._table_sent_files[uid] = sentfile
 
     def __save_table_sent_files_v2(self, outdir):
@@ -1330,7 +1333,7 @@ class tsentfile():
 
     def __init__(self, uid, ttype, parent, blob):
         self._uid = uid
-        self._ttype = int(ttype)
+        self._ttype = int(ttype) if ttype else 0
         self._parent = parent
         self._blob = blob
 

@@ -5,6 +5,7 @@
 # Part of the project: tblob.py tdb.py logger.py
 #
 # Version History
+# - 20200803: changed sqlite3 opening to 'bytes', fixed tdb.py on ver 4.9.0
 # - 20200731: fixed wrong object ID for page_block_subtitle
 # - 20200622: fixed wrong object 0x83e5de54 (message_empty_struct)
 # - 20200617: added support for 5.15.0
@@ -49,7 +50,7 @@ import logger
 import tblob
 import tdb
 
-VERSION = '20200731'
+VERSION = '20200803'
 
 #------------------------------------------------------------------------------
 
@@ -61,6 +62,7 @@ def process(infilename, outdirectory):
     tparse = tblob.tblob()
 
     with sqlite3.connect(db_uri, uri=True) as db_connection:
+        db_connection.text_factory = bytes
         db_connection.row_factory = sqlite3.Row
         db_cursor = db_connection.cursor()
 
