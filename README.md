@@ -15,6 +15,8 @@ It's assumed a bit of knowledge on how the cache4.db is organized and the specif
 * **5.6.2**: tested, expected to work
 * **><**: could work
 * **5.15.0**: tested, expected to work
+* **><**: could work
+* **6.3.0**: tested, expected to work
 * **>**: expected to fail
 
 ## Usage
@@ -22,7 +24,7 @@ It's assumed a bit of knowledge on how the cache4.db is organized and the specif
 ```
 usage: teleparser.py [-h] [-v] infilename outdirectory
 
-Telegram parser version 20200406
+Telegram parser version 20200807
 
 positional arguments:
   infilename     input file cache4.db
