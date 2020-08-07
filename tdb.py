@@ -394,6 +394,7 @@ class tdb():
                 fo.write('{}\n\n'.format(tus.blob))
 
     def parse(self):
+        # TODO check new 6.3.0 tables
         self.__parse_table_chats()
         self.__parse_table_contacts()
         self.__parse_table_dialogs()
