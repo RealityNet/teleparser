@@ -5,6 +5,7 @@
 # Part of the project: tblob.py tdb.py logger.py
 #
 # Version History
+# - 20200807: added support for version 6.3.0
 # - 20200803: changed sqlite3 opening to 'bytes', fixed tdb.py on ver 4.9.0
 # - 20200731: fixed wrong object ID for page_block_subtitle
 # - 20200622: fixed wrong object 0x83e5de54 (message_empty_struct)
@@ -50,7 +51,7 @@ import logger
 import tblob
 import tdb
 
-VERSION = '20200803'
+VERSION = '20200807'
 
 #------------------------------------------------------------------------------
 
